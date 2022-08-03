@@ -22,6 +22,7 @@
 #include "utils.h"
 #include "ui.h"
 #include "get_public_key.h"
+#include "get_wallet_id.h"
 #include "sign_transaction.h"
 #include "menu.h"
 #include "main.h"
@@ -113,6 +114,16 @@ void handle_apdu(volatile unsigned int *flags, volatile unsigned int *tx, volati
                 }
 
                 handle_get_public_key(G_io_apdu_buffer[OFFSET_P1], G_io_apdu_buffer[OFFSET_P2], G_io_apdu_buffer + OFFSET_CDATA, G_io_apdu_buffer[OFFSET_LC], flags, tx);
+            } break;
+
+            case INS_GET_WALLET_ID: {
+                if (G_io_apdu_buffer[OFFSET_LC] != rx - 5 || G_io_apdu_buffer[OFFSET_LC] != 20) {
+                    // the length of the APDU should match what's in the 5-byte header.
+                    // If not fail.  Don't want to buffer overrun or anything.
+                    THROW(SW_CONDITIONS_NOT_SATISFIED);
+                }
+
+                handle_get_wallet_id(G_io_apdu_buffer[OFFSET_P1], G_io_apdu_buffer[OFFSET_P2], G_io_apdu_buffer + OFFSET_CDATA, G_io_apdu_buffer[OFFSET_LC], flags, tx);
             } break;
 
             case INS_GET_APP_CONFIGURATION:
