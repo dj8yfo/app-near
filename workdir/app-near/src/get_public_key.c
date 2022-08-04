@@ -6,7 +6,7 @@
 
 static char address[FULL_ADDRESS_LENGTH];
 
-uint32_t set_result_get_public_key() {
+static uint32_t set_result_get_public_key() {
     memcpy(G_io_apdu_buffer, tmp_ctx.address_context.public_key, 32);
     return 32;
 }
@@ -44,7 +44,6 @@ UX_FLOW(
     &ux_display_public_flow_7_step);
 
 void handle_get_public_key(uint8_t p1, uint8_t p2, const uint8_t *input_buffer, uint16_t input_length, volatile unsigned int *flags, volatile unsigned int *tx) {
-    UNUSED(p1);
     UNUSED(p2);
     UNUSED(tx);
 
@@ -73,6 +72,14 @@ void handle_get_public_key(uint8_t p1, uint8_t p2, const uint8_t *input_buffer, 
         tmp_ctx.address_context.public_key, sizeof(tmp_ctx.address_context.public_key),
         address + sizeof(prefix) - 1, sizeof(address) - sizeof(prefix) + 1);
 
-    ux_flow_init(0, ux_display_public_flow, NULL);
-    *flags |= IO_ASYNCH_REPLY;
+    if (p1 == RETURN_ONLY) {
+        send_response(set_result_get_public_key(), true);
+    }
+    else if (p1 == DISPLAY_AND_CONFIRM) {
+        ux_flow_init(0, ux_display_public_flow, NULL);
+        *flags |= IO_ASYNCH_REPLY;
+    }
+    else {
+        THROW(SW_INCORRECT_P1_P2);
+    }
 }
