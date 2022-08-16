@@ -4,16 +4,52 @@ import socket
 import time
 import logging
 import pytest
+from typing import Literal, Union
+from pathlib import Path
+import re
+import json
 
 from ledgercomm import Transport
+from speculos.client import SpeculosClient
+from utils import default_settings, SpeculosGlobals
 
 
 logging.basicConfig(level=logging.INFO)
+# root of the repository
+repo_root_path: Path = Path(__file__).parent.parent
+ASSIGNMENT_RE = re.compile(
+    r'^\s*([a-zA-Z_][a-zA-Z_0-9]*)\s*=\s*(.*)$', re.MULTILINE)
 
 
 def pytest_addoption(parser):
     parser.addoption("--hid",
                      action="store_true")
+    parser.addoption("--headless", action="store_true")
+    parser.addoption("--model", action="store", default="nanos")
+    parser.addoption("--sdk", action="store", default="2.1")
+
+def get_app_version() -> str:
+    makefile_path = repo_root_path / "Makefile"
+    if not makefile_path.is_file():
+        raise FileNotFoundError(f"Can't find file: '{makefile_path}'")
+
+    makefile: str = makefile_path.read_text()
+
+    assignments = {
+        identifier: value for identifier, value in ASSIGNMENT_RE.findall(makefile)
+    }
+
+    return f"{assignments['APPVERSION_M']}.{assignments['APPVERSION_N']}.{assignments['APPVERSION_P']}"
+
+
+@pytest.fixture(scope="module")
+def app_version() -> str:
+    return get_app_version()
+
+
+@pytest.fixture
+def sdk(pytestconfig):
+    return pytestconfig.getoption("sdk")
 
 @pytest.fixture
 def hid(pytestconfig):
@@ -63,6 +99,13 @@ def device(request, hid):
     speculos_proc.terminate()
     speculos_proc.wait()
 
+@pytest.fixture
+def settings(request) -> dict:
+    try:
+        return request.function.test_settings
+    except AttributeError:
+        return default_settings.copy()
+
 
 @pytest.fixture
 def transport(device, hid):
@@ -73,3 +116,60 @@ def transport(device, hid):
                                        debug=True))
     yield transport
     transport.close()
+
+@pytest.fixture(scope='session', autouse=True)
+def root_directory(request):
+    return Path(str(request.config.rootdir))
+
+@pytest.fixture
+def hid(pytestconfig):
+    return pytestconfig.getoption("hid")
+
+
+@pytest.fixture
+def headless(pytestconfig):
+    return pytestconfig.getoption("headless")
+
+
+@pytest.fixture
+def enable_slow_tests(pytestconfig):
+    return pytestconfig.getoption("enableslowtests")
+
+
+@pytest.fixture
+def model(pytestconfig):
+    return pytestconfig.getoption("model")
+
+
+@pytest.fixture
+def comm(settings, root_directory, hid, headless, model, sdk, app_version: str) -> Union[Transport, SpeculosClient]:
+    if hid:
+        client = TransportClient("hid")
+    else:
+        # We set the app's name before running speculos in order to emulate the expected
+        # behavior of the SDK's GET_VERSION default APDU.
+
+        if not os.getenv("SPECULOS_APPNAME"):
+            os.environ['SPECULOS_APPNAME'] = f'app:{app_version}'
+
+        app_binary = os.getenv("BINARY", str(
+            repo_root_path.joinpath("NEAR-bin/app.elf")))
+
+        client = SpeculosClient(
+            app_binary,
+            ['--model', model, '--sdk', sdk, '--seed', f'{settings["mnemonic"]}']
+            + ["--display", "qt" if not headless else "headless"]
+        )
+        client.start()
+
+        if settings["automation_file"]:
+            automation_file = root_directory.joinpath(
+                settings["automation_file"])
+            rules = json.load(open(automation_file))
+            client.set_automation_rules(rules)
+
+    yield client
+
+    client.stop()
+
+
