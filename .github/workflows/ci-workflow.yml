@@ -48,8 +48,13 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: NEAR-app
-          path: workdir/app-near/tests/NEAR-bin
+          path: workdir/app-near/NEAR-bin
+
+      - name: Install tests dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y qemu-user-static
+          pip install --extra-index-url https://test.pypi.org/simple/ -r workdir/app-near/tests/requirements.txt
 
       - name: Run tests
         run: |
-          cd workdir/app-near/tests && pip install -r requirements.txt && SPECULOS=/speculos/speculos.py pytest
+          cd workdir/app-near/ && SPECULOS=/speculos/speculos.py pytest tests --sdk 2.0 --headless
