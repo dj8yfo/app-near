@@ -28,7 +28,7 @@ typedef struct signingContext_t {
 
 // A place to store data during the confirming the address
 typedef struct addressesContext_t {
-	char public_key[32];
+	uint8_t public_key[32];
 } addressesContext_t;
 
 typedef union {

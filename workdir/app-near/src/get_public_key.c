@@ -1,6 +1,7 @@
 #include "get_public_key.h"
 #include "os.h"
 #include "ux.h"
+#include "base58.h"
 #include "utils.h"
 #include "main.h"
 
@@ -68,9 +69,10 @@ void handle_get_public_key(uint8_t p1, uint8_t p2, const uint8_t *input_buffer, 
     const char prefix[] = "ed25519:";
     memset(address, 0, sizeof(address));
     snprintf(address, sizeof(address), prefix);
-    encode_base58(
-        tmp_ctx.address_context.public_key, sizeof(tmp_ctx.address_context.public_key),
-        address + sizeof(prefix) - 1, sizeof(address) - sizeof(prefix) + 1);
+    if (base58_encode(tmp_ctx.address_context.public_key, sizeof(tmp_ctx.address_context.public_key),
+        address + sizeof(prefix) - 1, sizeof(address) - sizeof(prefix) + 1) < 0) {
+            THROW(INVALID_PARAMETER);
+    }
 
     if (p1 == RETURN_ONLY) {
         send_response(set_result_get_public_key(), true);
