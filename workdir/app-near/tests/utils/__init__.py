@@ -1,8 +1,4 @@
-import hashlib
-from typing import Literal, Union
-
 from mnemonic import Mnemonic
-import json
 
 mnemo = Mnemonic("english")
 

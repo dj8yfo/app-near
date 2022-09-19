@@ -4,14 +4,14 @@ import socket
 import time
 import logging
 import pytest
-from typing import Literal, Union
+from typing import Union
 from pathlib import Path
 import re
 import json
 
 from ledgercomm import Transport
 from speculos.client import SpeculosClient
-from utils import default_settings, SpeculosGlobals
+from utils import default_settings
 
 
 logging.basicConfig(level=logging.INFO)

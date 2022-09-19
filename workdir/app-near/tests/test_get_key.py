@@ -1,13 +1,7 @@
-from hashlib import sha256
-import json
-from pathlib import Path
-from typing import Tuple, List, Dict, Any
-import pytest
+from typing import List
 import threading
 
 from speculos.client import SpeculosClient
-
-from utils import automation
 
 default_key = "c4f5941e81e071c2fd1dae2e71fd3d859d462484391d9a90bf219211dcbb320f"
 default_pubkey = "ed25519:EFr6nRvgKKeteKoEH7hudt8UHYiu94Liq2yMM7x2AU9U"
