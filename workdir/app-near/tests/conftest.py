@@ -1,24 +1,24 @@
-import subprocess
-import os
-import socket
-import time
-import logging
-import pytest
-from typing import Literal, Union
-from pathlib import Path
-import re
 import json
+import logging
+import os
+import re
+import socket
+import subprocess
+import time
+from pathlib import Path
+from typing import Union
 
+import pytest
 from ledgercomm import Transport
 from speculos.client import SpeculosClient
-from utils import default_settings, SpeculosGlobals
 
+from utils import DEFAULT_SETTINGS
 
 logging.basicConfig(level=logging.INFO)
 # root of the repository
 repo_root_path: Path = Path(__file__).parent.parent
 ASSIGNMENT_RE = re.compile(
-    r'^\s*([a-zA-Z_][a-zA-Z_0-9]*)\s*=\s*(.*)$', re.MULTILINE)
+    r'^\s*([a-zA-Z_]\w*)\s*=\s*(.*)$', re.MULTILINE)
 
 
 def pytest_addoption(parser):
@@ -28,18 +28,17 @@ def pytest_addoption(parser):
     parser.addoption("--model", action="store", default="nanos")
     parser.addoption("--sdk", action="store", default="2.1")
 
+
 def get_app_version() -> str:
     makefile_path = repo_root_path / "Makefile"
     if not makefile_path.is_file():
         raise FileNotFoundError(f"Can't find file: '{makefile_path}'")
 
     makefile: str = makefile_path.read_text()
-
-    assignments = {
-        identifier: value for identifier, value in ASSIGNMENT_RE.findall(makefile)
-    }
-
-    return f"{assignments['APPVERSION_M']}.{assignments['APPVERSION_N']}.{assignments['APPVERSION_P']}"
+    assignments = dict(ASSIGNMENT_RE.findall(makefile))
+    return f"{assignments['APPVERSION_M']}." \
+           f"{assignments['APPVERSION_N']}." \
+           f"{assignments['APPVERSION_P']}"
 
 
 @pytest.fixture(scope="module")
@@ -51,9 +50,11 @@ def app_version() -> str:
 def sdk(pytestconfig):
     return pytestconfig.getoption("sdk")
 
+
 @pytest.fixture
 def hid(pytestconfig):
     return pytestconfig.getoption("hid")
+
 
 @pytest.fixture
 def device(request, hid):
@@ -80,8 +81,8 @@ def device(request, hid):
 
     speculos_proc = subprocess.Popen([*base_args, *automation_args])
 
-
     # Attempts to connect to speculos to make sure that it's ready when the test starts
+    connected = False
     for _ in range(100):
         try:
             socket.create_connection(("127.0.0.1", 9999), timeout=1.0)
@@ -89,7 +90,6 @@ def device(request, hid):
             break
         except ConnectionRefusedError:
             time.sleep(0.1)
-            connected = False
 
     if not connected:
         raise RuntimeError("Unable to connect to speculos.")
@@ -99,12 +99,13 @@ def device(request, hid):
     speculos_proc.terminate()
     speculos_proc.wait()
 
+
 @pytest.fixture
 def settings(request) -> dict:
     try:
         return request.function.test_settings
     except AttributeError:
-        return default_settings.copy()
+        return DEFAULT_SETTINGS.copy()
 
 
 @pytest.fixture
@@ -117,13 +118,10 @@ def transport(device, hid):
     yield transport
     transport.close()
 
+
 @pytest.fixture(scope='session', autouse=True)
 def root_directory(request):
     return Path(str(request.config.rootdir))
-
-@pytest.fixture
-def hid(pytestconfig):
-    return pytestconfig.getoption("hid")
 
 
 @pytest.fixture
@@ -142,9 +140,10 @@ def model(pytestconfig):
 
 
 @pytest.fixture
-def comm(settings, root_directory, hid, headless, model, sdk, app_version: str) -> Union[Transport, SpeculosClient]:
+def comm(settings, root_directory, hid, headless, model, sdk, app_version: str) \
+        -> Union[Transport, SpeculosClient]:
     if hid:
-        client = TransportClient("hid")
+        client = Transport("hid")
     else:
         # We set the app's name before running speculos in order to emulate the expected
         # behavior of the SDK's GET_VERSION default APDU.
@@ -163,13 +162,12 @@ def comm(settings, root_directory, hid, headless, model, sdk, app_version: str) 
         client.start()
 
         if settings["automation_file"]:
-            automation_file = root_directory.joinpath(
+            automation_filename = root_directory.joinpath(
                 settings["automation_file"])
-            rules = json.load(open(automation_file))
+            with open(automation_filename) as automation_file:
+                rules = json.load(automation_file)
             client.set_automation_rules(rules)
 
     yield client
 
     client.stop()
-
-
