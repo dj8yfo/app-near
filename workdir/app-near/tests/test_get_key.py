@@ -19,10 +19,17 @@ DERIV_PATH_DATA = bytes.fromhex('8000002c8000018d800000008000000080000001')
 P1 = 0x00
 P2 = 0x57
 
+START_SCREEN_TEXT = ("Use wallet to", "view accounts")
+
+
 def ux_thread_approve(comm: SpeculosClient, all_events: List[dict]):
     """Completes the validation flow always going right and accepting at the appropriate time, while collecting all the events in all_events."""
 
+    # Skip start screen
     event = comm.get_next_event()
+    while event["text"] in START_SCREEN_TEXT:
+        event = comm.get_next_event()
+
     while (event["text"] != "Approve"):
         all_events.append(event)
         comm.press_and_release("right")
