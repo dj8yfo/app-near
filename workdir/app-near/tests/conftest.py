@@ -165,7 +165,8 @@ def comm(settings, root_directory, hid, headless, model, sdk, app_version: str) 
         if settings["automation_file"]:
             automation_file = root_directory.joinpath(
                 settings["automation_file"])
-            rules = json.load(open(automation_file))
+            with open(automation_file) as f:
+                rules = json.load(f)
             client.set_automation_rules(rules)
 
     yield client
