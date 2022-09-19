@@ -14,6 +14,7 @@ typedef enum rlpTxType {
     TX_FEE
 } rlpTxType;
 
+void bin_to_hex(char *out, const uint8_t *in, size_t len);
 void send_response(uint8_t tx, bool approve);
 
     // type            userid    x    y   w    h  str rad fill      fg        bg      fid iid  txt   touchparams...       ]

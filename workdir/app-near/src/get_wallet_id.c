@@ -66,7 +66,7 @@ void handle_get_wallet_id(uint8_t p1, uint8_t p2, const uint8_t *input_buffer, u
 
     memcpy(tmp_ctx.address_context.public_key, public_key.W, 32);
 
-    snprintf(&wallet_id, sizeof(wallet_id), "%.*H", 32, public_key.W);
+    bin_to_hex(wallet_id, public_key.W, 32);
 
     ux_flow_init(0, ux_display_wallet_id_flow, NULL);
     *flags |= IO_ASYNCH_REPLY;

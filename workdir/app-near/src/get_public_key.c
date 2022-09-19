@@ -5,6 +5,9 @@
 #include "utils.h"
 #include "main.h"
 
+#define ADDRESS_PREFIX "ed25519:"
+#define ADDRESS_PREFIX_SIZE strlen(ADDRESS_PREFIX)
+
 static char address[FULL_ADDRESS_LENGTH];
 
 static uint32_t set_result_get_public_key() {
@@ -66,11 +69,10 @@ void handle_get_public_key(uint8_t p1, uint8_t p2, const uint8_t *input_buffer, 
 
     memcpy(tmp_ctx.address_context.public_key, public_key.W, 32);
 
-    const char prefix[] = "ed25519:";
     memset(address, 0, sizeof(address));
-    snprintf(address, sizeof(address), prefix);
+    strcpy(address, ADDRESS_PREFIX);
     if (base58_encode(tmp_ctx.address_context.public_key, sizeof(tmp_ctx.address_context.public_key),
-        address + sizeof(prefix) - 1, sizeof(address) - sizeof(prefix) + 1) < 0) {
+        address + ADDRESS_PREFIX_SIZE, sizeof(address) - ADDRESS_PREFIX_SIZE - 1) < 0) {
             THROW(INVALID_PARAMETER);
     }
 
