@@ -14,9 +14,7 @@ typedef enum rlpTxType {
     TX_FEE
 } rlpTxType;
 
-unsigned char encode_base58(char WIDE *in, unsigned char length,
-                           char *out, unsigned char maxoutlen);
-
+void bin_to_hex(char *out, const uint8_t *in, size_t len);
 void send_response(uint8_t tx, bool approve);
 
     // type            userid    x    y   w    h  str rad fill      fg        bg      fid iid  txt   touchparams...       ]
