@@ -11,7 +11,6 @@
 #define FULL_ADDRESS_LENGTH 60
 #define BIP32_PATH 5
 
-extern ux_state_t ux;
 // display stepped screens
 extern unsigned int ux_step;
 extern unsigned int ux_step_count;

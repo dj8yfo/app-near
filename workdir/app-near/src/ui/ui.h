@@ -29,8 +29,6 @@
 #include "../crypto/ledger_crypto.h"
 #include "os_io_seproxyhal.h"
 
-extern ux_state_t ux;
-
 enum UI_STATE { UI_IDLE, UI_VERIFY };
 extern enum UI_STATE ui_state;
 
