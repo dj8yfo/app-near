@@ -54,8 +54,37 @@ void display_wallet_id(void) {
 
 #ifdef HAVE_NBGL
 
-void display_wallet_id(void) {
-    return;
+#include "nbgl_use_case.h"
+
+static void wallet_id_confirmation_callback(bool confirm)
+{
+    if (confirm)
+    {
+        send_response(set_result_get_public_key(), true);
+    }
+    else
+    {
+        send_response(0, false);
+    }
+}
+
+static void continue_review(void)
+{
+    nbgl_useCaseAddressConfirmation(
+        wallet_id,
+        wallet_id_confirmation_callback);
+}
+
+static void display_wallet_id(void)
+{
+    nbgl_useCaseReviewStart(
+        &C_Eye_48px,
+        "Review Wallet ID",
+        NULL,
+        "Reject",
+        continue_review,
+        NULL
+    );
 }
 
 #endif
