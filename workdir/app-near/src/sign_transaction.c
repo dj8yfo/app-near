@@ -7,6 +7,8 @@
 
 //////////////////////////////////////////////////////////////////////
 
+#ifdef HAVE_BAGL
+
 #define INFO_STEP(name, info_title, info_text) \
 UX_STEP_NOCB( \
     name, \
@@ -118,6 +120,31 @@ void sign_add_function_call_key_ux_flow_init() {
     print_ui_context();
     ux_flow_init(0, ux_display_sign_add_function_call_key_flow, NULL);
 }
+
+#endif
+
+#ifdef HAVE_NBGL
+
+void sign_ux_flow_init() {
+    // Todo
+}
+
+void sign_transfer_ux_flow_init() {
+    // Todo
+}
+
+void sign_function_call_ux_flow_init() {
+    // Todo
+}
+
+void sign_add_function_call_key_ux_flow_init() {
+    // Todo
+}
+
+
+#endif
+
+
 
 static void add_chunk_data(const uint8_t *input_data, size_t input_length) {
     // if this is a first chunk

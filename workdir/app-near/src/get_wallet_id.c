@@ -13,6 +13,8 @@ static uint32_t set_result_get_public_key() {
 
 //////////////////////////////////////////////////////////////////////
 
+#ifdef HAVE_BAGL
+
 UX_STEP_NOCB(
     ux_display_wallet_flow_id_step,
     bnnn_paging,
@@ -43,6 +45,21 @@ UX_FLOW(
     &ux_display_wallet_flow_accept_step,
     &ux_display_wallet_flow_reject_step);
 
+void display_wallet_id(void) {
+    ux_flow_init(0, ux_display_wallet_id_flow, NULL);
+    return;
+}
+
+#endif
+
+#ifdef HAVE_NBGL
+
+void display_wallet_id(void) {
+    return;
+}
+
+#endif
+
 void handle_get_wallet_id(uint8_t p1, uint8_t p2, const uint8_t *input_buffer, uint16_t input_length, volatile unsigned int *flags, volatile unsigned int *tx) {
     UNUSED(p1);
     UNUSED(p2);
@@ -67,7 +84,6 @@ void handle_get_wallet_id(uint8_t p1, uint8_t p2, const uint8_t *input_buffer, u
     memcpy(tmp_ctx.address_context.public_key, public_key.W, 32);
 
     bin_to_hex(wallet_id, public_key.W, 32);
-
-    ux_flow_init(0, ux_display_wallet_id_flow, NULL);
+    display_wallet_id();
     *flags |= IO_ASYNCH_REPLY;
 }

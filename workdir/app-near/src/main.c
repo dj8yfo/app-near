@@ -240,9 +240,13 @@ void app_main(void) {
 }
 
 // override point, but nothing more to do
+#ifdef HAVE_BAGL
 void io_seproxyhal_display(const bagl_element_t *element) {
     io_seproxyhal_display_default((bagl_element_t*)element);
 }
+#else
+
+#endif
 
 unsigned char io_event(unsigned char channel) {
     UNUSED(channel);
@@ -256,9 +260,11 @@ unsigned char io_event(unsigned char channel) {
             UX_FINGER_EVENT(G_io_seproxyhal_spi_buffer);
             break;
 
+	#ifndef HAVE_NBGL
         case SEPROXYHAL_TAG_BUTTON_PUSH_EVENT:
             UX_BUTTON_PUSH_EVENT(G_io_seproxyhal_spi_buffer);
             break;
+    #endif
 
         case SEPROXYHAL_TAG_STATUS_EVENT:
             if (G_io_apdu_media == IO_APDU_MEDIA_USB_HID && !(U4BE(G_io_seproxyhal_spi_buffer, 3) & SEPROXYHAL_TAG_STATUS_EVENT_FLAG_USB_POWERED)) {
@@ -269,9 +275,11 @@ unsigned char io_event(unsigned char channel) {
             UX_DEFAULT_EVENT();
             break;
 
+	#ifndef HAVE_NBGL
         case SEPROXYHAL_TAG_DISPLAY_PROCESSED_EVENT:
             UX_DISPLAYED_EVENT({});
-            break;
+            break; 
+    #endif
 
         case SEPROXYHAL_TAG_TICKER_EVENT:
             UX_TICKER_EVENT(G_io_seproxyhal_spi_buffer, {});
@@ -329,6 +337,7 @@ void app_exit(void) {
 }
 
 void nv_app_state_init(){
+    #if 0
     if (N_storage.initialized != 0x01) {
         internalStorage_t storage;
         storage.dummy_setting_1 = 0x00;
@@ -338,6 +347,7 @@ void nv_app_state_init(){
     }
     dummy_setting_1 = N_storage.dummy_setting_1;
     dummy_setting_2 = N_storage.dummy_setting_2;
+    #endif
 }
 
 __attribute__((section(".boot"))) int main(void) {
