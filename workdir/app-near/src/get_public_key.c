@@ -1,9 +1,9 @@
 #include "get_public_key.h"
-#include "os.h"
-#include "ux.h"
 #include "base58.h"
 #include "utils.h"
 #include "main.h"
+#include "os.h"
+#include "ux.h"
 
 #define ADDRESS_PREFIX "ed25519:"
 #define ADDRESS_PREFIX_SIZE strlen(ADDRESS_PREFIX)
@@ -16,6 +16,8 @@ static uint32_t set_result_get_public_key() {
 }
 
 //////////////////////////////////////////////////////////////////////
+
+#ifdef HAVE_BAGL
 
 UX_STEP_NOCB(
     ux_display_public_flow_5_step,
@@ -46,6 +48,21 @@ UX_FLOW(
     &ux_display_public_flow_5_step,
     &ux_display_public_flow_6_step,
     &ux_display_public_flow_7_step);
+
+
+void display_public_key(void) {
+    ux_flow_init(0, ux_display_public_flow, NULL);
+}
+
+#endif
+
+#ifdef HAVE_NBGL
+
+void display_public_key(void) {
+    return;
+}
+
+#endif
 
 void handle_get_public_key(uint8_t p1, uint8_t p2, const uint8_t *input_buffer, uint16_t input_length, volatile unsigned int *flags, volatile unsigned int *tx) {
     UNUSED(p2);
@@ -80,7 +97,7 @@ void handle_get_public_key(uint8_t p1, uint8_t p2, const uint8_t *input_buffer, 
         send_response(set_result_get_public_key(), true);
     }
     else if (p1 == DISPLAY_AND_CONFIRM) {
-        ux_flow_init(0, ux_display_public_flow, NULL);
+        display_public_key();
         *flags |= IO_ASYNCH_REPLY;
     }
     else {

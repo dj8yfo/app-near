@@ -48,7 +48,10 @@ all: default
 ############
 
 DEFINES   += OS_IO_SEPROXYHAL
-DEFINES   += HAVE_BAGL HAVE_SPRINTF
+DEFINES   += HAVE_SPRINTF
+ifneq ($(TARGET_NAME),TARGET_FATSTACKS)
+DEFINES += HAVE_BAGL HAVE_UX_FLOW
+endif
 DEFINES   += HAVE_IO_USB HAVE_L4_USBLIB IO_USB_MAX_ENDPOINTS=6 IO_HID_EP_LENGTH=64 HAVE_USB_APDU
 DEFINES   += LEDGER_MAJOR_VERSION=$(APPVERSION_M) LEDGER_MINOR_VERSION=$(APPVERSION_N) LEDGER_PATCH_VERSION=$(APPVERSION_P)
 
@@ -63,16 +66,20 @@ DEFINES       += HAVE_WEBUSB WEBUSB_URL_SIZE_B=$(shell echo -n $(WEBUSB_URL) | w
 
 DEFINES   += UNUSED\(x\)=\(void\)x
 DEFINES   += APPVERSION=\"$(APPVERSION)\"
-
+DEFINES   += APPNAME=\"$(APPNAME)\"
 
 ifeq ($(TARGET_NAME),TARGET_NANOX)
+DEFINES       += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000
+DEFINES       += HAVE_BLE_APDU # basic ledger apdu transport over BLE
+else ifeq ($(TARGET_NAME),TARGET_FATSTACKS)
 DEFINES       += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000
 DEFINES       += HAVE_BLE_APDU # basic ledger apdu transport over BLE
 endif
 
 ifeq ($(TARGET_NAME),TARGET_NANOS)
 DEFINES       += IO_SEPROXYHAL_BUFFER_SIZE_B=128
-else
+else ifneq ($(TARGET_NAME),TARGET_FATSTACKS)
+# Nano X, Nano S plus
 DEFINES       += IO_SEPROXYHAL_BUFFER_SIZE_B=300
 DEFINES       += HAVE_GLO096
 DEFINES       += HAVE_BAGL BAGL_WIDTH=128 BAGL_HEIGHT=64
@@ -80,6 +87,9 @@ DEFINES       += HAVE_BAGL_ELLIPSIS # long label truncation feature
 DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_REGULAR_11PX
 DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_EXTRABOLD_11PX
 DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_LIGHT_16PX
+else ifeq ($(TARGET_NAME),TARGET_FATSTACKS)
+# Stax
+DEFINES += IO_SEPROXYHAL_BUFFER_SIZE_B=300
 endif
 
 # Both nano S and X benefit from the flow.
@@ -132,9 +142,17 @@ include $(BOLOS_SDK)/Makefile.glyphs
 ### variables processed by the common makefile.rules of the SDK to grab source files and include dirs
 APP_SOURCE_PATH  += src
 SDK_SOURCE_PATH  += lib_stusb lib_stusb_impl lib_u2f
-SDK_SOURCE_PATH  += lib_ux
+
+ifeq ($(TARGET_NAME),TARGET_FATSTACKS)
+SDK_SOURCE_PATH += lib_nbgl/src
+SDK_SOURCE_PATH += lib_ux_fatstacks
+else
+SDK_SOURCE_PATH += lib_ux
+endif
 
 ifeq ($(TARGET_NAME),TARGET_NANOX)
+SDK_SOURCE_PATH  += lib_blewbxx lib_blewbxx_impl
+else ifeq ($(TARGET_NAME),TARGET_FATSTACKS)
 SDK_SOURCE_PATH  += lib_blewbxx lib_blewbxx_impl
 endif
 
