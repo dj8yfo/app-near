@@ -4,13 +4,15 @@
 #include "main.h"
 #include "os.h"
 #include "ux.h"
+#include "glyphs.h"
 
 #define ADDRESS_PREFIX "ed25519:"
 #define ADDRESS_PREFIX_SIZE strlen(ADDRESS_PREFIX)
 
 static char address[FULL_ADDRESS_LENGTH];
 
-static uint32_t set_result_get_public_key() {
+static uint32_t set_result_get_public_key()
+{
     memcpy(G_io_apdu_buffer, tmp_ctx.address_context.public_key, 32);
     return 32;
 }
@@ -49,8 +51,8 @@ UX_FLOW(
     &ux_display_public_flow_6_step,
     &ux_display_public_flow_7_step);
 
-
-void display_public_key(void) {
+void display_public_key(void)
+{
     ux_flow_init(0, ux_display_public_flow, NULL);
 }
 
@@ -58,13 +60,43 @@ void display_public_key(void) {
 
 #ifdef HAVE_NBGL
 
-void display_public_key(void) {
-    return;
+#include "nbgl_use_case.h"
+
+static void wallet_id_confirmation_callback(bool confirm)
+{
+    if (confirm)
+    {
+        send_response(set_result_get_public_key(), true);
+    }
+    else
+    {
+        send_response(0, false);
+    }
+}
+
+static void continue_review(void)
+{
+    nbgl_useCaseAddressConfirmation(
+        address,
+        wallet_id_confirmation_callback);
+}
+
+static void display_public_key(void)
+{
+    nbgl_useCaseReviewStart(
+        &C_Eye_48px,
+        "Review public key",
+        NULL,
+        "Reject",
+        continue_review,
+        NULL
+    );
 }
 
 #endif
 
-void handle_get_public_key(uint8_t p1, uint8_t p2, const uint8_t *input_buffer, uint16_t input_length, volatile unsigned int *flags, volatile unsigned int *tx) {
+void handle_get_public_key(uint8_t p1, uint8_t p2, const uint8_t *input_buffer, uint16_t input_length, volatile unsigned int *flags, volatile unsigned int *tx)
+{
     UNUSED(p2);
     UNUSED(tx);
 
@@ -74,7 +106,8 @@ void handle_get_public_key(uint8_t p1, uint8_t p2, const uint8_t *input_buffer, 
     cx_ecfp_public_key_t public_key;
 
     uint32_t path[5];
-    if (input_length < sizeof(path)) {
+    if (input_length < sizeof(path))
+    {
         THROW(INVALID_PARAMETER);
     }
     read_path_from_bytes(input_buffer, path);
@@ -89,18 +122,22 @@ void handle_get_public_key(uint8_t p1, uint8_t p2, const uint8_t *input_buffer, 
     memset(address, 0, sizeof(address));
     strcpy(address, ADDRESS_PREFIX);
     if (base58_encode(tmp_ctx.address_context.public_key, sizeof(tmp_ctx.address_context.public_key),
-        address + ADDRESS_PREFIX_SIZE, sizeof(address) - ADDRESS_PREFIX_SIZE - 1) < 0) {
-            THROW(INVALID_PARAMETER);
+                      address + ADDRESS_PREFIX_SIZE, sizeof(address) - ADDRESS_PREFIX_SIZE - 1) < 0)
+    {
+        THROW(INVALID_PARAMETER);
     }
 
-    if (p1 == RETURN_ONLY) {
+    if (p1 == RETURN_ONLY)
+    {
         send_response(set_result_get_public_key(), true);
     }
-    else if (p1 == DISPLAY_AND_CONFIRM) {
+    else if (p1 == DISPLAY_AND_CONFIRM)
+    {
         display_public_key();
         *flags |= IO_ASYNCH_REPLY;
     }
-    else {
+    else
+    {
         THROW(SW_INCORRECT_P1_P2);
     }
 }
