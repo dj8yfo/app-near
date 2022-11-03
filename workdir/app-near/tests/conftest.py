@@ -1,173 +1,61 @@
-import json
-import logging
-import os
-import re
-import socket
-import subprocess
-import time
-from pathlib import Path
-from typing import Union
-
 import pytest
-from ledgercomm import Transport
-from speculos.client import SpeculosClient
+from ragger import Firmware
+from ragger.backend import SpeculosBackend, LedgerCommBackend
 
-from utils import DEFAULT_SETTINGS
+# This variable is needed for Speculos only (physical tests need the application to be already installed)
+APPLICATION = "bin/app.elf"
+# This variable will be useful in tests to implement different behavior depending on the firmware
+NANOS_FIRMWARE = Firmware("nanosp", "1.0")
 
-logging.basicConfig(level=logging.INFO)
-# root of the repository
-repo_root_path: Path = Path(__file__).parent.parent
-ASSIGNMENT_RE = re.compile(
-    r'^\s*([a-zA-Z_]\w*)\s*=\s*(.*)$', re.MULTILINE)
-
-
+# adding a pytest CLI option "--backend"
 def pytest_addoption(parser):
-    parser.addoption("--hid",
-                     action="store_true")
-    parser.addoption("--headless", action="store_true")
-    parser.addoption("--model", action="store", default="nanos")
-    parser.addoption("--sdk", action="store", default="2.1")
+    print(help(parser.addoption))
+    parser.addoption("--backend", action="store", default="speculos")
+    parser.addoption("--display", action="store_true", default=False)
 
+# accessing the value of the "--backend" option as a fixture
+@pytest.fixture(scope="session")
+def backend(pytestconfig):
+    return pytestconfig.getoption("backend")
 
-def get_app_version() -> str:
-    makefile_path = repo_root_path / "Makefile"
-    if not makefile_path.is_file():
-        raise FileNotFoundError(f"Can't find file: '{makefile_path}'")
+@pytest.fixture(scope="session")
+def display(pytestconfig):
+    return pytestconfig.getoption("display")
 
-    makefile: str = makefile_path.read_text()
-    assignments = dict(ASSIGNMENT_RE.findall(makefile))
-    return f"{assignments['APPVERSION_M']}." \
-           f"{assignments['APPVERSION_N']}." \
-           f"{assignments['APPVERSION_P']}"
-
-
-@pytest.fixture(scope="module")
-def app_version() -> str:
-    return get_app_version()
-
-
+# Providing the firmware as a fixture
+# This can be easily parametrized, which would allow to run the tests on several firmware type or version
 @pytest.fixture
-def sdk(pytestconfig):
-    return pytestconfig.getoption("sdk")
+def firmware():
+    return NANOS_FIRMWARE
+
+def prepare_speculos_args(firmware: Firmware, display: bool):
+    speculos_args = []
+
+    if display:
+        speculos_args += ["--display", "qt"]
+
+    # app_path = app_path_from_app_name(APPS_DIRECTORY, APP_NAME, firmware.device)
+    app_path = "bin/app.elf"
+
+    return ([app_path], {"args": speculos_args})
 
 
-@pytest.fixture
-def hid(pytestconfig):
-    return pytestconfig.getoption("hid")
-
-
-@pytest.fixture
-def device(request, hid):
-    # If running on real hardware, nothing to do here
-    if hid:
-        yield
-        return
-
-    # Gets the speculos executable from the SPECULOS environment variable,
-    # or hopes that "speculos.py" is in the $PATH if not set
-    speculos_executable = os.environ.get("SPECULOS", "speculos.py")
-
-    base_args = [
-        speculos_executable, "./NEAR-bin/app.elf",
-        "--sdk", "2.0",
-        "--display", "headless"
-    ]
-
-    # Look for the automation_file attribute in the test function, if present
-    try:
-        automation_args = ["--automation", f"file:{request.function.automation_file}"]
-    except AttributeError:
-        automation_args = []
-
-    speculos_proc = subprocess.Popen([*base_args, *automation_args])
-
-    # Attempts to connect to speculos to make sure that it's ready when the test starts
-    connected = False
-    for _ in range(100):
-        try:
-            socket.create_connection(("127.0.0.1", 9999), timeout=1.0)
-            connected = True
-            break
-        except ConnectionRefusedError:
-            time.sleep(0.1)
-
-    if not connected:
-        raise RuntimeError("Unable to connect to speculos.")
-
-    yield
-
-    speculos_proc.terminate()
-    speculos_proc.wait()
-
-
-@pytest.fixture
-def settings(request) -> dict:
-    try:
-        return request.function.test_settings
-    except AttributeError:
-        return DEFAULT_SETTINGS.copy()
-
-
-@pytest.fixture
-def transport(device, hid):
-    transport = (Transport(interface="hid", debug=True)
-                 if hid else Transport(interface="tcp",
-                                       server="127.0.0.1",
-                                       port=9999,
-                                       debug=True))
-    yield transport
-    transport.close()
-
-
-@pytest.fixture(scope='session', autouse=True)
-def root_directory(request):
-    return Path(str(request.config.rootdir))
-
-
-@pytest.fixture
-def headless(pytestconfig):
-    return pytestconfig.getoption("headless")
-
-
-@pytest.fixture
-def enable_slow_tests(pytestconfig):
-    return pytestconfig.getoption("enableslowtests")
-
-
-@pytest.fixture
-def model(pytestconfig):
-    return pytestconfig.getoption("model")
-
-
-@pytest.fixture
-def comm(settings, root_directory, hid, headless, model, sdk, app_version: str) \
-        -> Union[Transport, SpeculosClient]:
-    if hid:
-        client = Transport("hid")
+# Depending on the "--backend" option value, a different backend is
+# instantiated, and the tests will either run on Speculos or on a physical
+# device depending on the backend
+def create_backend(backend: str, firmware: Firmware, display: bool):
+    if backend.lower() == "ledgercomm":
+        return LedgerCommBackend(firmware, interface="hid")
+    elif backend.lower() == "ledgerwallet":
+        return LedgerWalletBackend(firmware)
+    elif backend.lower() == "speculos":
+        args, kwargs = prepare_speculos_args(firmware, display)
+        return SpeculosBackend(*args, firmware, **kwargs)
     else:
-        # We set the app's name before running speculos in order to emulate the expected
-        # behavior of the SDK's GET_VERSION default APDU.
+        raise ValueError(f"Backend '{backend}' is unknown. Valid backends are: {BACKENDS}")
 
-        if not os.getenv("SPECULOS_APPNAME"):
-            os.environ['SPECULOS_APPNAME'] = f'app:{app_version}'
-
-        app_binary = os.getenv("BINARY", str(
-            repo_root_path.joinpath("NEAR-bin/app.elf")))
-
-        client = SpeculosClient(
-            app_binary,
-            ['--model', model, '--sdk', sdk, '--seed', f'{settings["mnemonic"]}']
-            + ["--display", "qt" if not headless else "headless"]
-        )
-        client.start()
-
-        if settings["automation_file"]:
-            automation_filename = root_directory.joinpath(
-                settings["automation_file"])
-            with open(automation_filename) as automation_file:
-                rules = json.load(automation_file)
-            client.set_automation_rules(rules)
-
-    yield client
-
-    client.stop()
+# This final fixture will return the properly configured backend client, to be used in tests
+@pytest.fixture
+def client(backend, firmware, display):
+    with create_backend(backend, firmware, display) as b:
+        yield b
