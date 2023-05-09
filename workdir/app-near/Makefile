@@ -33,6 +33,8 @@ DEFINES += $(DEFINES_LIB)
 
 ifeq ($(TARGET_NAME),TARGET_NANOS)
 	ICONNAME=near_icon.gif
+else ifeq ($(TARGET_NAME),TARGET_STAX)
+	ICONNAME=near_icon_x.gif
 else
 	ICONNAME=near_icon_x.gif
 endif
@@ -49,7 +51,7 @@ all: default
 
 DEFINES   += OS_IO_SEPROXYHAL
 DEFINES   += HAVE_SPRINTF
-ifneq ($(TARGET_NAME),TARGET_FATSTACKS)
+ifneq ($(TARGET_NAME),TARGET_STAX)
 DEFINES += HAVE_BAGL HAVE_UX_FLOW
 endif
 DEFINES   += HAVE_IO_USB HAVE_L4_USBLIB IO_USB_MAX_ENDPOINTS=6 IO_HID_EP_LENGTH=64 HAVE_USB_APDU
@@ -71,14 +73,14 @@ DEFINES   += APPNAME=\"$(APPNAME)\"
 ifeq ($(TARGET_NAME),TARGET_NANOX)
 DEFINES       += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000
 DEFINES       += HAVE_BLE_APDU # basic ledger apdu transport over BLE
-else ifeq ($(TARGET_NAME),TARGET_FATSTACKS)
+else ifeq ($(TARGET_NAME),TARGET_STAX)
 DEFINES       += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000
 DEFINES       += HAVE_BLE_APDU # basic ledger apdu transport over BLE
 endif
 
 ifeq ($(TARGET_NAME),TARGET_NANOS)
 DEFINES       += IO_SEPROXYHAL_BUFFER_SIZE_B=128
-else ifneq ($(TARGET_NAME),TARGET_FATSTACKS)
+else ifneq ($(TARGET_NAME),TARGET_STAX)
 # Nano X, Nano S plus
 DEFINES       += IO_SEPROXYHAL_BUFFER_SIZE_B=300
 DEFINES       += HAVE_GLO096
@@ -87,7 +89,7 @@ DEFINES       += HAVE_BAGL_ELLIPSIS # long label truncation feature
 DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_REGULAR_11PX
 DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_EXTRABOLD_11PX
 DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_LIGHT_16PX
-else ifeq ($(TARGET_NAME),TARGET_FATSTACKS)
+else ifeq ($(TARGET_NAME),TARGET_STAX)
 # Stax
 DEFINES += IO_SEPROXYHAL_BUFFER_SIZE_B=300
 endif
@@ -143,16 +145,16 @@ include $(BOLOS_SDK)/Makefile.glyphs
 APP_SOURCE_PATH  += src
 SDK_SOURCE_PATH  += lib_stusb lib_stusb_impl lib_u2f
 
-ifeq ($(TARGET_NAME),TARGET_FATSTACKS)
+ifeq ($(TARGET_NAME),TARGET_STAX)
 SDK_SOURCE_PATH += lib_nbgl/src
-SDK_SOURCE_PATH += lib_ux_fatstacks
+SDK_SOURCE_PATH += lib_ux_stax
 else
 SDK_SOURCE_PATH += lib_ux
 endif
 
 ifeq ($(TARGET_NAME),TARGET_NANOX)
 SDK_SOURCE_PATH  += lib_blewbxx lib_blewbxx_impl
-else ifeq ($(TARGET_NAME),TARGET_FATSTACKS)
+else ifeq ($(TARGET_NAME),TARGET_STAX)
 SDK_SOURCE_PATH  += lib_blewbxx lib_blewbxx_impl
 endif
 
