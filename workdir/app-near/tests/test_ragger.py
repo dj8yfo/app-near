@@ -1,6 +1,5 @@
 from enum import Enum, auto
 from typing import List, Optional
-import threading
 from dataclasses import dataclass
 
 from ragger.backend.interface import RAPDU, BackendInterface
@@ -110,6 +109,9 @@ def generic_test_sign(backend: BackendInterface,
     assert resp.status == 0x9000
     assert resp.data == expected_signature
 
+
+# All the transaction payloads and the expected signatures used in the tests are generated with
+# the rust file 'main.rs' located in folder tests/near_payload_generator/src
 
 def test_sign_transfer(backend: BackendInterface):
     """
