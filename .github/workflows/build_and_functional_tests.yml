@@ -32,4 +32,4 @@ jobs:
     with:
       download_app_binaries_artifact: "compiled_app_binaries"
       test_dir: './workdir/app-near/tests'
-      relative_app_directory: './workdir/app-near
+      relative_app_directory: './workdir/app-near'
