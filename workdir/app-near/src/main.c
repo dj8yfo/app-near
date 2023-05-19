@@ -271,6 +271,7 @@ unsigned char io_event(unsigned char channel) {
                 THROW(EXCEPTION_IO_RESET);
             }
             // no break is intentional
+            __attribute__((fallthrough));
         default:
             UX_DEFAULT_EVENT();
             break;

@@ -32,12 +32,13 @@ DEFINES += $(DEFINES_LIB)
 
 
 ifeq ($(TARGET_NAME),TARGET_NANOS)
-	ICONNAME=near_icon.gif
+    ICONNAME=icons/nanos_app_near.gif
 else ifeq ($(TARGET_NAME),TARGET_STAX)
-	ICONNAME=near_icon_x.gif
+    ICONNAME=icons/stax_app_near_32px.gif
 else
-	ICONNAME=near_icon_x.gif
+    ICONNAME=icons/nanox_app_near.gif
 endif
+
 
 
 ################

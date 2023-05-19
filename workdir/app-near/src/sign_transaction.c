@@ -136,7 +136,6 @@ void sign_add_function_call_key_ux_flow_init()
 static nbgl_layoutTagValueList_t list;
 static nbgl_layoutTagValue_t pairs[5];
 static nbgl_pageInfoLongPress_t long_press_infos;
-static char* sucess_text = NULL;
 
 static void approve_callback(void)
 {
@@ -152,7 +151,7 @@ static void choice_callback(bool confirm)
 {
     if (confirm)
     {
-        nbgl_useCaseStatus(sucess_text, true, approve_callback);
+        nbgl_useCaseStatus("SUCCESS", true, approve_callback);
     }
     else
     {
@@ -219,7 +218,6 @@ static void generic_init_hold_to_approve(void)
 
 static void generic_intro_flow(nbgl_callback_t continue_callback)
 {
-    sucess_text = "SUCCESS";
     generic_init_list();
     generic_init_hold_to_approve();
 
