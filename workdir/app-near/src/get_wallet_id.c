@@ -55,37 +55,55 @@ void display_wallet_id(void) {
 #ifdef HAVE_NBGL
 
 #include "nbgl_use_case.h"
+#include "menu.h"
 
-static void wallet_id_confirmation_callback(bool confirm)
+static void display_wallet_id_done(bool validated)
+{
+    if (validated) {
+        nbgl_useCaseStatus("WALLET ID\nVERIFIED", true, ui_idle);
+    } else {
+        nbgl_useCaseStatus("Wallet ID verification\ncancelled", false, ui_idle);
+    }
+}
+
+static void wallet_id_verification_cancelled(void) {
+    send_response(0, false);
+    // Display "cancelled" screen
+    display_wallet_id_done(false);
+}
+
+static void display_wallet_id_callback(bool confirm)
 {
     if (confirm)
     {
         send_response(set_result_get_public_key(), true);
+        // Display "verified" screen
+        display_wallet_id_done(true);
     }
     else
     {
-        send_response(0, false);
+        wallet_id_verification_cancelled();
     }
 }
 
-static void continue_review(void)
+// called when tapping on review start page to actually display wallet id
+static void display_wallet(void) 
 {
-    nbgl_useCaseAddressConfirmation(
-        wallet_id,
-        wallet_id_confirmation_callback);
+    nbgl_useCaseAddressConfirmation(wallet_id, &display_wallet_id_callback);
 }
 
 static void display_wallet_id(void)
 {
     nbgl_useCaseReviewStart(
-        &C_Eye_48px,
-        "Review Wallet ID",
+        &C_stax_app_near_64px,
+        "Verify NEAR\nwallet ID",
         NULL,
-        "Reject",
-        continue_review,
-        NULL
+        "Cancel",
+        display_wallet,
+        wallet_id_verification_cancelled
     );
 }
+
 
 #endif
 

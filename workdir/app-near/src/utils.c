@@ -21,6 +21,9 @@ void send_response(uint8_t tx, bool approve) {
     G_io_apdu_buffer[tx++] = approve? 0x00 : 0x85;
     // Send back the response, do not restart the event loop
     io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, tx);
+
+    #ifdef HAVE_BAGL
     // Display back the original UX
     ui_idle();
+    #endif
 }

@@ -61,35 +61,53 @@ void display_public_key(void)
 #ifdef HAVE_NBGL
 
 #include "nbgl_use_case.h"
+#include "menu.h"
 
-static void wallet_id_confirmation_callback(bool confirm)
+static void display_public_key_done(bool validated)
+{
+    if (validated) {
+        nbgl_useCaseStatus("ADDRESS\nVERIFIED", true, ui_idle);
+    } else {
+        nbgl_useCaseStatus("Address verification\ncancelled", false, ui_idle);
+    }
+}
+
+static void address_verification_cancelled(void) {
+    send_response(0, false);
+    // Display "cancelled" screen
+    display_public_key_done(false);
+}
+
+static void display_address_callback(bool confirm)
 {
     if (confirm)
     {
         send_response(set_result_get_public_key(), true);
+        // Display "verified" screen
+        display_public_key_done(true);
     }
     else
     {
-        send_response(0, false);
+        address_verification_cancelled();
     }
 }
 
-static void continue_review(void)
+// called when tapping on review start page to actually display address
+static void display_addr(void) 
 {
-    nbgl_useCaseAddressConfirmation(
-        address,
-        wallet_id_confirmation_callback);
+    
+    nbgl_useCaseAddressConfirmation(address, &display_address_callback);
 }
 
 static void display_public_key(void)
 {
     nbgl_useCaseReviewStart(
-        &C_Eye_48px,
-        "Review public key",
+        &C_stax_app_near_64px,
+        "Verify NEAR\naddress",
         NULL,
-        "Reject",
-        continue_review,
-        NULL
+        "Cancel",
+        display_addr,
+        address_verification_cancelled
     );
 }
 

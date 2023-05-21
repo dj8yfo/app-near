@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Optional, Generator
 from dataclasses import dataclass
 from contextlib import contextmanager
-
+from ragger.backend import RaisePolicy
 from ragger.backend.interface import RAPDU, BackendInterface
 from ragger.navigator import NavInsID, NavIns
 from utils import get_version_from_makefile
@@ -30,11 +30,13 @@ P1_MORE = 0x80
 # Parameter not used for this APDU
 P1_P2_NOT_USED = 0x57
 
+# Return codes
+SW_OK                       = 0x9000
+SW_CONDITIONS_NOT_SATISFIED = 0x6985
 
 # m/44'/397'/0'/0'/1
 DERIV_PATH_DATA = bytes.fromhex('8000002c8000018d800000008000000080000001')
 
-START_SCREEN_TEXT = ("Use wallet to", "view accounts")
 
 @dataclass
 class Nearbackend():
@@ -61,7 +63,7 @@ class Nearbackend():
             else:
                 # Not last APDU
                 rapdu = self.backend.exchange(CLA, INS_SIGN, P1_START, P1_P2_NOT_USED, bytes(data[0:to_send]))
-                if rapdu.status != 0x9000:
+                if rapdu.status != SW_OK:
                     return rapdu
 
             cnt += to_send
@@ -100,6 +102,8 @@ class Nearbackend():
 ############################## TESTS ##############################
 ###################################################################
 
+####################### APP VERSION TEST ##########################
+
 # In this test we check that the get_version replies the right application version
 def test_app_configuration(backend):
     # Use the app interface instead of raw interface
@@ -110,6 +114,8 @@ def test_app_configuration(backend):
     # Assert that we have received the correct app version compared as Makefile data
     assert (version[0], version[1], version[2]) == get_version_from_makefile()
 
+
+####################### PUBLIC KEY TESTS ##########################
 def test_get_public_key_and_confirm_screen(firmware, backend, navigator, test_name):
     client = Nearbackend(backend)
 
@@ -138,43 +144,174 @@ def test_get_public_key_and_confirm_screen(firmware, backend, navigator, test_na
                                         instructions)
     response = client.get_async_response()
 
-    assert response.status == 0x9000
+    assert response.status == SW_OK
     assert response.data == DEFAULT_KEY
 
 def test_get_public_key_no_confirm_screen(backend: BackendInterface):
     near = Nearbackend(backend)
     # Send the get pub key instruction (no confirmation).
     rapdu = near.get_public_key(DERIV_PATH_DATA)
-    assert rapdu.status == 0x9000
+    assert rapdu.status == SW_OK
     assert rapdu.data == DEFAULT_KEY
 
+# In this test we check that the GET_PUBLIC_KEY in confirmation mode replies an error if the user refuses
+def test_get_public_key_confirm_refused(firmware, backend, navigator, test_name):
+    client = Nearbackend(backend)
+
+    # Send the get pub key instruction.
+    # As it requires on-screen validation, the function is asynchronous.
+    # It will yield the result when the navigation is done
+    with client.get_public_key_with_confirmation(DERIV_PATH_DATA):
+        # Disable raising when trying to unpack an error APDU
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+
+        # Validate the on-screen request by performing the navigation appropriate for this device
+        if firmware.device.startswith("nano"):
+            navigator.navigate_until_text_and_compare(NavInsID.RIGHT_CLICK,
+                                                    [NavInsID.BOTH_CLICK],
+                                                    "Reject",
+                                                    ROOT_SCREENSHOT_PATH,
+                                                    test_name)
+        else:
+            instructions = [
+                NavInsID.USE_CASE_REVIEW_REJECT,
+                NavInsID.USE_CASE_STATUS_DISMISS]
+
+            navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH,
+                                        test_name,
+                                        instructions)
+
+    response = client.get_async_response()
+
+    # Assert that we have received a refusal
+    assert response.status == SW_CONDITIONS_NOT_SATISFIED
+    assert len(response.data) == 0
+
+
+# In this test we check that the GET_PUBLIC_KEY in confirmation mode replies an error if the user refuses
+def test_get_public_key_confirm_refused_2(firmware, backend, navigator, test_name):
+    if firmware.device.startswith("stax"):
+        client = Nearbackend(backend)
+
+        # Send the get pub key instruction.
+        # As it requires on-screen validation, the function is asynchronous.
+        # It will yield the result when the navigation is done
+        with client.get_public_key_with_confirmation(DERIV_PATH_DATA):
+            # Disable raising when trying to unpack an error APDU
+            backend.raise_policy = RaisePolicy.RAISE_NOTHING
+
+            # Validate the on-screen request by performing the navigation appropriate for this device
+            instructions = [
+                NavInsID.USE_CASE_REVIEW_TAP,
+                NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CANCEL,
+                NavInsID.USE_CASE_STATUS_DISMISS]
+
+            navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH,
+                                        test_name,
+                                        instructions)
+        response = client.get_async_response()
+
+        # Assert that we have received a refusal
+        assert response.status == SW_CONDITIONS_NOT_SATISFIED
+        assert len(response.data) == 0
+
+
+
+####################### WALLET ID TESTS ##########################
 def test_get_wallet_id(firmware, backend, navigator, test_name):
+    client = Nearbackend(backend)
+
+    # Send the get wallet idinstruction.
+    # As it requires on-screen validation, the function is asynchronous.
+    # It will yield the result when the navigation is done
+    with client.get_wallet_id(DERIV_PATH_DATA):
+
+        # Validate the on-screen request by performing the navigation appropriate for this device
+        if firmware.device.startswith("nano"):
+            navigator.navigate_until_text_and_compare(NavInsID.RIGHT_CLICK,
+                                                    [NavInsID.BOTH_CLICK],
+                                                    "Approve",
+                                                    ROOT_SCREENSHOT_PATH,
+                                                    test_name)
+        else:
+            instructions = [
+                NavInsID.USE_CASE_REVIEW_TAP,
+                NavIns(NavInsID.TOUCH, (200, 335)),
+                NavInsID.USE_CASE_ADDRESS_CONFIRMATION_EXIT_QR,
+                NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CONFIRM,
+                NavInsID.USE_CASE_STATUS_DISMISS
+            ]
+            navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH,
+                                        test_name,
+                                        instructions)
+    response = client.get_async_response()
+
+    assert response.status == SW_OK
+    assert response.data == DEFAULT_KEY
+
+# In this test we check that the GET_WALLET_ID in confirmation mode replies an error if the user refuses
+def test_get_wallet_id_refused(firmware, backend, navigator, test_name):
     client = Nearbackend(backend)
 
     # Send the get wallet id instruction.
     # As it requires on-screen validation, the function is asynchronous.
     # It will yield the result when the navigation is done
     with client.get_wallet_id(DERIV_PATH_DATA):
+        # Disable raising when trying to unpack an error APDU
+        backend.raise_policy = RaisePolicy.RAISE_NOTHING
+
         # Validate the on-screen request by performing the navigation appropriate for this device
         if firmware.device.startswith("nano"):
             navigator.navigate_until_text_and_compare(NavInsID.RIGHT_CLICK,
-                                                        [NavInsID.BOTH_CLICK],
-                                                        "Approve",
-                                                        ROOT_SCREENSHOT_PATH,
-                                                        test_name)
+                                                    [NavInsID.BOTH_CLICK],
+                                                    "Reject",
+                                                    ROOT_SCREENSHOT_PATH,
+                                                    test_name)
         else:
-            navigator.navigate_until_text_and_compare(NavInsID.USE_CASE_REVIEW_TAP,
-                                                        [NavInsID.USE_CASE_REVIEW_CONFIRM,
-                                                        NavInsID.USE_CASE_STATUS_DISMISS,
-                                                        NavInsID.WAIT_FOR_HOME_SCREEN],
-                                                        "Hold to approve",
-                                                        ROOT_SCREENSHOT_PATH,
-                                                        test_name)
+            instructions = [
+                NavInsID.USE_CASE_REVIEW_REJECT,
+                NavInsID.USE_CASE_STATUS_DISMISS]
+
+            navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH,
+                                        test_name,
+                                        instructions)
+
     response = client.get_async_response()
 
-    assert response.status == 0x9000
-    assert response.data == DEFAULT_KEY
+    # Assert that we have received a refusal
+    assert response.status == SW_CONDITIONS_NOT_SATISFIED
+    assert len(response.data) == 0
 
+
+# In this test we check that the GET_WALLET_ID in confirmation mode replies an error if the user refuses
+def test_get_wallet_id_refused_2(firmware, backend, navigator, test_name):
+    if firmware.device.startswith("stax"):
+        client = Nearbackend(backend)
+
+        # Send the get wallet id instruction.
+        # As it requires on-screen validation, the function is asynchronous.
+        # It will yield the result when the navigation is done
+        with client.get_wallet_id(DERIV_PATH_DATA):
+            # Disable raising when trying to unpack an error APDU
+            backend.raise_policy = RaisePolicy.RAISE_NOTHING
+
+            # Validate the on-screen request by performing the navigation appropriate for this device
+            instructions = [
+                NavInsID.USE_CASE_REVIEW_TAP,
+                NavInsID.USE_CASE_ADDRESS_CONFIRMATION_CANCEL,
+                NavInsID.USE_CASE_STATUS_DISMISS]
+
+            navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH,
+                                        test_name,
+                                        instructions)
+        response = client.get_async_response()
+
+        # Assert that we have received a refusal
+        assert response.status == SW_CONDITIONS_NOT_SATISFIED
+        assert len(response.data) == 0
+
+
+####################### TRANSACTION TESTS ##########################
 def generic_test_sign(backend, firmware, navigator, test_name, near_payload: bytes, expected_signature: bytes):
     """
     Generic function to tests NEAR signature mechanism 
@@ -198,12 +335,12 @@ def generic_test_sign(backend, firmware, navigator, test_name, near_payload: byt
                                                       [NavInsID.USE_CASE_REVIEW_CONFIRM,
                                                       NavInsID.USE_CASE_STATUS_DISMISS,
                                                       NavInsID.WAIT_FOR_HOME_SCREEN],
-                                                      "Hold to approve",
+                                                      "Hold to sign",
                                                       ROOT_SCREENSHOT_PATH,
                                                       test_name,
                                                       screen_change_after_last_instruction = False)
     response = client.get_async_response()
-    assert response.status == 0x9000
+    assert response.status == SW_OK
     assert response.data == expected_signature
 
 # NOTE
@@ -432,3 +569,202 @@ def test_sign_delete_account(firmware, backend, navigator, test_name):
 #     expected_signature = bytes.fromhex(
 #         "927cad5aee066055a3042de85c92a2cccee77df6582a7218b6ffe5129c8151729db553e9aec1a138a40bc90e487eb7e2f68c58b9aa71e3e2d3ade6ecc7e9270e")
 #     generic_test_sign(backend, firmware, navigator, test_name, near_payload, expected_signature)
+
+
+# In this test we send to the device a message to sign and cancel it on screen
+# We will ensure that the displayed information is correct by using screenshots comparison
+def generic_sign_message_cancel(backend, firmware, navigator, test_name, near_payload: bytes):
+    # Use the app interface instead of raw interface
+    client = Nearbackend(backend)
+
+    # Disable raising when trying to unpack an error APDU
+    backend.raise_policy = RaisePolicy.RAISE_NOTHING
+
+    if firmware.device.startswith("nano"):
+
+        # Send the sign device instruction.
+        # As it requires on-screen validation, the function is asynchronous.
+        # It will yield the result when the navigation is done
+        with client.sign_message(DERIV_PATH_DATA, near_payload):
+            # Validate the on-screen request by performing the navigation appropriate for this device
+            navigator.navigate_until_text_and_compare(NavInsID.RIGHT_CLICK,
+                                                    [NavInsID.BOTH_CLICK],
+                                                    "Reject",
+                                                    ROOT_SCREENSHOT_PATH,
+                                                    test_name)
+        # The device as yielded the result, parse it and ensure that the signature is correct
+        response = client.get_async_response()
+
+        # Assert that we have received a refusal
+        assert response.status == SW_CONDITIONS_NOT_SATISFIED
+        assert len(response.data) == 0
+    else:
+        instructions_list = [
+            [
+                NavInsID.USE_CASE_REVIEW_REJECT,
+                NavInsID.USE_CASE_CHOICE_CONFIRM,
+                NavInsID.USE_CASE_STATUS_DISMISS,
+                NavInsID.WAIT_FOR_HOME_SCREEN
+            ],
+            [
+                NavInsID.USE_CASE_REVIEW_TAP,
+                NavInsID.USE_CASE_REVIEW_REJECT,
+                NavInsID.USE_CASE_CHOICE_CONFIRM,
+                NavInsID.USE_CASE_STATUS_DISMISS,
+                NavInsID.WAIT_FOR_HOME_SCREEN
+            ],
+            [
+                NavInsID.USE_CASE_REVIEW_TAP,
+                NavInsID.USE_CASE_REVIEW_TAP,
+                NavInsID.USE_CASE_REVIEW_REJECT,
+                NavInsID.USE_CASE_CHOICE_CONFIRM,
+                NavInsID.USE_CASE_STATUS_DISMISS,
+                NavInsID.WAIT_FOR_HOME_SCREEN
+            ],
+            [
+                NavInsID.USE_CASE_REVIEW_REJECT,
+                NavInsID.USE_CASE_CHOICE_REJECT,
+                NavInsID.USE_CASE_REVIEW_REJECT,
+                NavInsID.USE_CASE_CHOICE_CONFIRM,
+                NavInsID.USE_CASE_STATUS_DISMISS,
+                NavInsID.WAIT_FOR_HOME_SCREEN
+            ]
+        ]
+
+        for i, instructions in enumerate(instructions_list):
+            # Reset cx context
+            client.get_version()
+            
+            # Send the sign device instruction.
+            # As it requires on-screen validation, the function is asynchronous.
+            # It will yield the result when the navigation is done
+            with client.sign_message(DERIV_PATH_DATA, near_payload):
+                # Validate the on-screen request by performing the navigation appropriate for this device
+                navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH,
+                                               test_name + f"/part{i}",
+                                               instructions,
+                                               screen_change_after_last_instruction = False)
+
+            # The device as yielded the result, parse it and ensure that the signature is correct
+            response = client.get_async_response()
+
+            # Assert that we have received a refusal
+            assert response.status == SW_CONDITIONS_NOT_SATISFIED
+            assert len(response.data) == 0
+
+def test_sign_transfer_cancel(firmware, backend, navigator, test_name):
+    """
+    Transaction {
+        signer_id: AccountId(
+            "blablatest.testnet",
+        ),
+        public_key: ed25519:EFr6nRvgKKeteKoEH7hudt8UHYiu94Liq2yMM7x2AU9U,
+        nonce: 96520360000015,
+        receiver_id: AccountId(
+            "speculos.testnet",
+        ),
+        block_hash: `C32rfeBkSMT1xnsrArkV9Mu81ww9qK7n6Kw17NhEbVuK`,
+        actions: [
+            Transfer(
+                TransferAction {
+                    deposit: 123400000000000000000000,
+                },
+            ),
+        ],
+    }
+    """
+    near_payload = bytes.fromhex(
+        "12000000626c61626c61746573742e746573746e657400c4f5941e81e071c2fd1dae2e71fd3d859d462484391d9a90bf219211dcbb320f0f7ac5e5c85700001000000073706563756c6f732e746573746e6574a3f5d1167a5c605fed71fc78d4381bef47a5acb3aba6fc9c07d7b8b912fc1e2a010000000300002083c7f60387211a000000000000")
+    generic_sign_message_cancel(backend, firmware, navigator, test_name, near_payload)
+
+
+
+def test_sign_function_call_cancel(firmware, backend, navigator, test_name):
+    """
+    Transaction {
+        signer_id: AccountId(
+            "blablatest.testnet",
+        ),
+        public_key: ed25519:EFr6nRvgKKeteKoEH7hudt8UHYiu94Liq2yMM7x2AU9U,
+        nonce: 96520360000015,
+        receiver_id: AccountId(
+            "speculos.testnet",
+        ),
+        block_hash: `C32rfeBkSMT1xnsrArkV9Mu81ww9qK7n6Kw17NhEbVuK`,
+        actions: [
+            FunctionCall(
+                FunctionCallAction {
+                    method_name: function_name,
+                    args: `Dza`,
+                    gas: 9999,
+                    deposit: 1122334455,
+                },
+            ),
+        ],
+    }
+    """
+
+    near_payload = bytes.fromhex(
+        "12000000626c61626c61746573742e746573746e657400c4f5941e81e071c2fd1dae2e71fd3d859d462484391d9a90bf219211dcbb320f0f7ac5e5c85700001000000073706563756c6f732e746573746e6574a3f5d1167a5c605fed71fc78d4381bef47a5acb3aba6fc9c07d7b8b912fc1e2a01000000020d00000066756e6374696f6e5f6e616d6502000000aabb0f27000000000000f776e542000000000000000000000000")
+
+    generic_sign_message_cancel(backend, firmware, navigator, test_name, near_payload)
+
+
+def test_sign_stake_cancel(firmware, backend, navigator, test_name):
+    """
+    Transaction {
+        signer_id: AccountId(
+            "signer.near",
+        ),
+        public_key: ed25519:4c2pNM4aqrdTgaeRQyJnP9UwAFvHstDzZ1SCQAB7HnEc,
+        nonce: 96520360000015,
+        receiver_id: AccountId(
+            "receiver.near",
+        ),
+        block_hash: `C32rfeBkSMT1xnsrArkV9Mu81ww9qK7n6Kw17NhEbVuK`,
+        actions: [
+            Stake(
+                StakeAction {
+                    stake: 55556666,
+                    public_key: ed25519:J6DmXMFwt894ZXED1BCGiK3y1aRhophVob5VwL8JBTm1,
+                },
+            ),
+        ],
+    }
+    """
+    near_payload = bytes.fromhex(
+        "0b0000007369676e65722e6e65617200358c7177d702ee102a3cae18aa84b005bbd03b9188d5312e7d6df8f78d2a6a490f7ac5e5c85700000d00000072656365697665722e6e656172a3f5d1167a5c605fed71fc78d4381bef47a5acb3aba6fc9c07d7b8b912fc1e2a01000000043aba4f0300000000000000000000000000fded04a996ebf5e25e7d6dd4c82edbbb544a397517edea03eadb39fb5211e460")
+    generic_sign_message_cancel(backend, firmware, navigator, test_name, near_payload)
+
+
+
+def test_sign_add_key_cancel(firmware, backend, navigator, test_name):
+    """
+    Transaction {
+        signer_id: AccountId(
+            "arthur",
+        ),
+        public_key: ed25519:JCuJVU1tbr2tmYGX8b6f3YpvuN2zBZd2MZAYh16cNqGr,
+        nonce: 96520360000015,
+        receiver_id: AccountId(
+            "98793cd91a3f870fb126f66285808c7e094afcfc4eda8a970f6648cdf0dbd6de",
+        ),
+        block_hash: `C32rfeBkSMT1xnsrArkV9Mu81ww9qK7n6Kw17NhEbVuK`,
+        actions: [
+            AddKey(
+                AddKeyAction {
+                    public_key: ed25519:79QAhRR464JQGr5ZXZe6jvXGM8NNgnR5KzRoQhaJyTYT,
+                    access_key: AccessKey {
+                        nonce: 12345,
+                        permission: FullAccess,
+                    },
+                },
+            ),
+        ],
+    }
+    """
+
+    near_payload = bytes.fromhex(
+        "060000006172746875720053f9afa67ef91539ff38e2b36bbbed2d1dce6e18d06337cf6647389b5477359b0f7ac5e5c85700004000000039383739336364393161336638373066623132366636363238353830386337653039346166636663346564613861393730663636343863646630646264366465a3f5d1167a5c605fed71fc78d4381bef47a5acb3aba6fc9c07d7b8b912fc1e2a0100000005002ffe256fd9a6e815abc3f220163413ac62871ecc5875d87625a35ce7ea65ee2f393000000000000001")
+    generic_sign_message_cancel(backend, firmware, navigator, test_name, near_payload)
+

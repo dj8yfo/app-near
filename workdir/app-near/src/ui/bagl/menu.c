@@ -176,38 +176,54 @@ void ui_idle(void)
 
 #include "nbgl_use_case.h"
 
-void ui_app_quit(void)
-{
-  os_sched_exit(-1);
-}
 
-static const char *const INFO_TYPES[] = {"Version", APPNAME};
-static const char *const INFO_CONTENTS[] = {APPVERSION, "(c) 2022 Ledger"};
+//  ----------------------------------------------------------- 
+//  --------------------- INFO MENU -----------------------
+//  ----------------------------------------------------------- 
+static const char* const INFO_TYPES[] = {"Version", "Developer"};
+static const char* const INFO_CONTENTS[] = {APPVERSION, "Near foundation"};
 
 static bool nav_callback(uint8_t page, nbgl_pageContent_t *content)
 {
   UNUSED(page);
   content->type = INFOS_LIST;
   content->infosList.nbInfos = 2;
-  content->infosList.infoTypes = (const char **)INFO_TYPES;
-  content->infosList.infoContents = (const char **)INFO_CONTENTS;
+  content->infosList.infoTypes = INFO_TYPES;
+  content->infosList.infoContents = INFO_CONTENTS;
   return true;
 }
 
-void ui_menu_about(void)
+// info menu definition
+void ui_menu_info(void)
 {
-  nbgl_useCaseSettings(APPNAME, 0, 1, false, ui_idle, nav_callback, NULL);
+  #define NB_INFO_PAGE   (1)
+  #define INIT_INFO_PAGE (0)
+  nbgl_useCaseSettings(APPNAME, INIT_INFO_PAGE, NB_INFO_PAGE, false, ui_idle, nav_callback, NULL);
 }
 
+//  ----------------------------------------------------------- 
+//  --------------------- HOME SCREEN MENU --------------------
+//  ----------------------------------------------------------- 
+void ui_app_quit(void)
+{
+  os_sched_exit(-1);
+}
+
+
+// home page defintion
 void ui_idle(void)
 {
+  #define SETTINGS_BUTTON_DISABLED (false)
+
   nbgl_useCaseHome(
-      "Test",
+      APPNAME,
+      &C_stax_app_near_64px,
       NULL,
-      "Tagline",
-      false,
-      ui_menu_about,
+      SETTINGS_BUTTON_DISABLED,
+      ui_menu_info,
       ui_app_quit);
 }
+
+
 
 #endif

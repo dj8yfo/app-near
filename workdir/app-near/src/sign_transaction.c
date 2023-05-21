@@ -131,37 +131,51 @@ void sign_add_function_call_key_ux_flow_init()
 
 #ifdef HAVE_NBGL
 
-#include "nbgl_use_case.h"
+//  ----------------------------------------------------------- 
+//  ---------------- SIGN TRANSACTION FLOWS -------------------
+//  ----------------------------------------------------------- 
 
-static nbgl_layoutTagValueList_t list;
-static nbgl_layoutTagValue_t pairs[5];
+#include "nbgl_use_case.h"
+#include "menu.h"
+
+#define MAX_TAG_VALUE_PAIRS_DISPLAYED (5)
+static nbgl_layoutTagValueList_t list  = {0};
+static nbgl_layoutTagValue_t pairs[MAX_TAG_VALUE_PAIRS_DISPLAYED];
 static nbgl_pageInfoLongPress_t long_press_infos;
 
 static void approve_callback(void)
 {
     send_response(set_result_sign(), true);
+    ui_idle();
 }
 
 static void reject_callback(void)
 {
     send_response(0, false);
+    nbgl_useCaseStatus("Transaction rejected", false, ui_idle);
+}
+
+static void reject_confirmation(void) 
+{
+    nbgl_useCaseConfirm("Reject transaction?", NULL, "Yes, Reject", "Go back to transaction", reject_callback);
 }
 
 static void choice_callback(bool confirm)
 {
     if (confirm)
     {
-        nbgl_useCaseStatus("SUCCESS", true, approve_callback);
+        nbgl_useCaseStatus("TRANSACTION\nSIGNED", true, approve_callback);
     }
     else
     {
-        reject_callback();
+        reject_confirmation();
     }
 }
 
+
 // Available field to be displayed
 
-#define INTRO_ITEM "Confirm"
+#define INTRO_ITEM "Review transaction"
 #define INTRO_VALUE ui_context.line1
 #define RECEIVER_ITEM "To"
 #define RECEIVER_VALUE ui_context.line2
@@ -195,25 +209,21 @@ static uint8_t field_cnt = 0;
     pairs[field_cnt++].value = field##_VALUE;
 
 #define START_REVIEW() \
-    nbgl_useCaseStaticReview(&list, &long_press_infos, "Reject", choice_callback);
+    nbgl_useCaseStaticReview(&list, &long_press_infos, "Reject transaction", choice_callback);
 
 // Generics
 
 static void generic_init_list(void)
 {
-    list.nbMaxLinesForValue = 4;
-    list.smallCaseForValue = false;
-    list.wrapping = false;
+    list.nbMaxLinesForValue = 0;
     list.pairs = pairs;
 }
 
 static void generic_init_hold_to_approve(void)
 {
-    long_press_infos.icon = &C_badge_transaction_56;
-    long_press_infos.longPressText = "Hold to approve";
-    long_press_infos.longPressToken = 0;
-    long_press_infos.tuneId = TUNE_SUCCESS;
-    long_press_infos.text = "Confirm";
+    long_press_infos.icon = &C_stax_app_near_64px;
+    long_press_infos.longPressText = "Hold to sign";
+    long_press_infos.text = "Sign transaction?";
 }
 
 static void generic_intro_flow(nbgl_callback_t continue_callback)
@@ -222,16 +232,15 @@ static void generic_intro_flow(nbgl_callback_t continue_callback)
     generic_init_hold_to_approve();
 
     nbgl_useCaseReviewStart(
-        &C_Eye_48px,
+        &C_stax_app_near_64px,
         INTRO_ITEM,
         INTRO_VALUE,
-        "Reject",
+        "Reject transaction",
         continue_callback,
-        reject_callback);
+        reject_confirmation);
 }
 
 // Sign
-
 static void display_sign_flow(void)
 {
     // Fill fields
@@ -249,7 +258,7 @@ void sign_ux_flow_init(void)
     generic_intro_flow(display_sign_flow);
 }
 
-// Transfer
+// ------------------ Transfer -------------------
 
 static void display_transfer_flow(void)
 {
@@ -269,7 +278,7 @@ void sign_transfer_ux_flow_init(void)
     generic_intro_flow(display_transfer_flow);
 }
 
-// Function call
+// ------------------ Function call -------------------
 
 static void display_function_call_flow(void)
 {
@@ -290,8 +299,8 @@ void sign_function_call_ux_flow_init()
     generic_intro_flow(display_function_call_flow);
 }
 
-// Function call key
 
+// ------------------ Function call key -------------------
 static void display_call_key_flow(void)
 {
     // Fill fields

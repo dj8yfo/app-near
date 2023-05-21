@@ -39,8 +39,6 @@ else
     ICONNAME=icons/nanox_app_near.gif
 endif
 
-
-
 ################
 # Default rule #
 ################
@@ -71,32 +69,26 @@ DEFINES   += UNUSED\(x\)=\(void\)x
 DEFINES   += APPVERSION=\"$(APPVERSION)\"
 DEFINES   += APPNAME=\"$(APPNAME)\"
 
-ifeq ($(TARGET_NAME),TARGET_NANOX)
-DEFINES       += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000
-DEFINES       += HAVE_BLE_APDU # basic ledger apdu transport over BLE
-else ifeq ($(TARGET_NAME),TARGET_STAX)
-DEFINES       += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000
-DEFINES       += HAVE_BLE_APDU # basic ledger apdu transport over BLE
+ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX))
+    DEFINES += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000 HAVE_BLE_APDU
 endif
 
 ifeq ($(TARGET_NAME),TARGET_NANOS)
-DEFINES       += IO_SEPROXYHAL_BUFFER_SIZE_B=128
+	DEFINES       += IO_SEPROXYHAL_BUFFER_SIZE_B=128
 else ifneq ($(TARGET_NAME),TARGET_STAX)
 # Nano X, Nano S plus
-DEFINES       += IO_SEPROXYHAL_BUFFER_SIZE_B=300
-DEFINES       += HAVE_GLO096
-DEFINES       += HAVE_BAGL BAGL_WIDTH=128 BAGL_HEIGHT=64
-DEFINES       += HAVE_BAGL_ELLIPSIS # long label truncation feature
-DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_REGULAR_11PX
-DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_EXTRABOLD_11PX
-DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_LIGHT_16PX
+	DEFINES       += IO_SEPROXYHAL_BUFFER_SIZE_B=300
+	DEFINES       += HAVE_GLO096
+	DEFINES       += HAVE_BAGL BAGL_WIDTH=128 BAGL_HEIGHT=64
+	DEFINES       += HAVE_BAGL_ELLIPSIS # long label truncation feature
+	DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_REGULAR_11PX
+	DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_EXTRABOLD_11PX
+	DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_LIGHT_16PX
 else ifeq ($(TARGET_NAME),TARGET_STAX)
 # Stax
-DEFINES += IO_SEPROXYHAL_BUFFER_SIZE_B=300
+	DEFINES += IO_SEPROXYHAL_BUFFER_SIZE_B=300
+    DEFINES += NBGL_QRCODE
 endif
-
-# Both nano S and X benefit from the flow.
-DEFINES       += HAVE_UX_FLOW
 
 # Enabling debug PRINTF
 DEBUG = 0
@@ -129,14 +121,8 @@ $(info GCCPATH is not set: arm-none-eabi-* will be used from PATH)
 endif
 
 CC       := $(CLANGPATH)clang
-
-#CFLAGS   += -O0
-CFLAGS   += -O3 -Os
-
-AS     := $(GCCPATH)arm-none-eabi-gcc
-
+AS       := $(GCCPATH)arm-none-eabi-gcc
 LD       := $(GCCPATH)arm-none-eabi-gcc
-LDFLAGS  += -O3 -Os
 LDLIBS   += -lm -lgcc -lc
 
 # import rules to compile glyphs(/pone)
@@ -146,17 +132,12 @@ include $(BOLOS_SDK)/Makefile.glyphs
 APP_SOURCE_PATH  += src
 SDK_SOURCE_PATH  += lib_stusb lib_stusb_impl lib_u2f
 
-ifeq ($(TARGET_NAME),TARGET_STAX)
-SDK_SOURCE_PATH += lib_nbgl/src
-SDK_SOURCE_PATH += lib_ux_stax
-else
+ifneq ($(TARGET_NAME),TARGET_STAX)
 SDK_SOURCE_PATH += lib_ux
 endif
 
-ifeq ($(TARGET_NAME),TARGET_NANOX)
-SDK_SOURCE_PATH  += lib_blewbxx lib_blewbxx_impl
-else ifeq ($(TARGET_NAME),TARGET_STAX)
-SDK_SOURCE_PATH  += lib_blewbxx lib_blewbxx_impl
+ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX))
+    SDK_SOURCE_PATH += lib_blewbxx lib_blewbxx_impl
 endif
 
 load: all
@@ -183,8 +164,6 @@ include $(BOLOS_SDK)/Makefile.rules
 
 #add dependency on custom makefile filename
 dep/%.d: %.c Makefile
-
-
 
 listvariants:
 	@echo VARIANTS COIN near
