@@ -96,7 +96,7 @@ static void display_wallet_id(void)
 {
     nbgl_useCaseReviewStart(
         &C_stax_app_near_64px,
-        "Verify NEAR\nwallet ID",
+        "Verify " APPNAME "\nwallet ID",
         NULL,
         "Cancel",
         display_wallet,

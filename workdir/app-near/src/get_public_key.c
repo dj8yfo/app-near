@@ -103,7 +103,7 @@ static void display_public_key(void)
 {
     nbgl_useCaseReviewStart(
         &C_stax_app_near_64px,
-        "Verify NEAR\naddress",
+        "Verify " APPNAME "\naddress",
         NULL,
         "Cancel",
         display_addr,

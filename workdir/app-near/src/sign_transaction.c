@@ -175,7 +175,7 @@ static void choice_callback(bool confirm)
 
 // Available field to be displayed
 
-#define INTRO_ITEM "Review transaction"
+#define INTRO_ITEM "Review transaction to\n"
 #define INTRO_VALUE ui_context.line1
 #define RECEIVER_ITEM "To"
 #define RECEIVER_VALUE ui_context.line2
@@ -193,6 +193,12 @@ static void choice_callback(bool confirm)
 #define CONTRACT_VALUE ui_context.line2
 #define ALLOWANCE_ITEM "Allowance"
 #define ALLOWANCE_VALUE ui_context.line5
+#define SIGN_ITEM "Sign transaction to\n"
+#define SIGN_VALUE INTRO_VALUE
+#define MAX_DISPLAYED_STRING_LENGTH 100
+
+static char review_displayed_string[MAX_DISPLAYED_STRING_LENGTH] = {0};
+static char sign_displayed_string[MAX_DISPLAYED_STRING_LENGTH] = {0};
 
 // Utility macros
 
@@ -220,21 +226,27 @@ static void generic_init_list(void)
 }
 
 static void generic_init_hold_to_approve(void)
-{
+{  
     long_press_infos.icon = &C_stax_app_near_64px;
     long_press_infos.longPressText = "Hold to sign";
-    long_press_infos.text = "Sign transaction?";
+    memcpy(sign_displayed_string, SIGN_ITEM, sizeof(SIGN_ITEM));
+    strlcat(sign_displayed_string, SIGN_VALUE, MAX_DISPLAYED_STRING_LENGTH);
+    strlcat(sign_displayed_string, "?", MAX_DISPLAYED_STRING_LENGTH);
+    long_press_infos.text = sign_displayed_string;
 }
 
 static void generic_intro_flow(nbgl_callback_t continue_callback)
 {
+    memcpy(review_displayed_string, INTRO_ITEM, sizeof(INTRO_ITEM));
+    strlcat(review_displayed_string, INTRO_VALUE, MAX_DISPLAYED_STRING_LENGTH);
+
     generic_init_list();
     generic_init_hold_to_approve();
 
     nbgl_useCaseReviewStart(
         &C_stax_app_near_64px,
-        INTRO_ITEM,
-        INTRO_VALUE,
+        review_displayed_string,
+        NULL,
         "Reject transaction",
         continue_callback,
         reject_confirmation);
