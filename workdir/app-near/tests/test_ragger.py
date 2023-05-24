@@ -115,6 +115,25 @@ def test_app_configuration(backend):
     assert (version[0], version[1], version[2]) == get_version_from_makefile()
 
 
+####################### INFO MENU TEST ##########################
+# In this test we check the behavior of the device info menu
+def test_app_info_menu(firmware, navigator, test_name):
+    # Navigate in the info menu
+    if firmware.device.startswith("nano"):
+        instructions = [
+            NavInsID.RIGHT_CLICK,
+            NavInsID.RIGHT_CLICK,
+            NavInsID.RIGHT_CLICK
+        ]
+    else:
+        instructions = [
+            NavInsID.USE_CASE_HOME_INFO,
+            NavInsID.USE_CASE_SETTINGS_SINGLE_PAGE_EXIT
+        ]
+    navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name, instructions,
+                                   screen_change_before_first_instruction=False)    
+
+
 ####################### PUBLIC KEY TESTS ##########################
 def test_get_public_key_and_confirm_screen(firmware, backend, navigator, test_name):
     client = Nearbackend(backend)

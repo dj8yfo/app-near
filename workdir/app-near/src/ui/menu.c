@@ -181,7 +181,7 @@ void ui_idle(void)
 //  --------------------- INFO MENU -----------------------
 //  ----------------------------------------------------------- 
 static const char* const INFO_TYPES[] = {"Version", "Developer"};
-static const char* const INFO_CONTENTS[] = {APPVERSION, "Near foundation"};
+static const char* const INFO_CONTENTS[] = {APPVERSION, "NEAR Protocol"};
 
 static bool nav_callback(uint8_t page, nbgl_pageContent_t *content)
 {
