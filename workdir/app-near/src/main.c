@@ -260,7 +260,7 @@ unsigned char io_event(unsigned char channel) {
             UX_FINGER_EVENT(G_io_seproxyhal_spi_buffer);
             break;
 
-	#ifndef HAVE_NBGL
+    #ifndef HAVE_NBGL
         case SEPROXYHAL_TAG_BUTTON_PUSH_EVENT:
             UX_BUTTON_PUSH_EVENT(G_io_seproxyhal_spi_buffer);
             break;
@@ -276,7 +276,7 @@ unsigned char io_event(unsigned char channel) {
             UX_DEFAULT_EVENT();
             break;
 
-	#ifndef HAVE_NBGL
+    #ifndef HAVE_NBGL
         case SEPROXYHAL_TAG_DISPLAY_PROCESSED_EVENT:
             UX_DISPLAYED_EVENT({});
             break; 
