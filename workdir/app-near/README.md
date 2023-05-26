@@ -1,7 +1,7 @@
 # NEAR Ledger app
 
 ## Overview
-This is Nano S/X app for NEAR protocol.
+This is Nano S/SP/X and Stax app for NEAR protocol.
 
 ## Building and installing
 To build and install the app on your Ledger Nano S you must set up the Ledger Nano S build environments. Please follow the Getting Started instructions at [here](https://ledger.readthedocs.io/en/latest/userspace/getting_started.html).

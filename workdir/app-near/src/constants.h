@@ -4,10 +4,12 @@
 // Hardware dependent limits:
 //   Ledger Nano X has 32K RAM
 //   Ledger Nano S has 4K RAM
-#if defined(TARGET_NANOX) || defined(TARGET_NANOS2)
+#if defined(TARGET_NANOX) || defined(TARGET_NANOS2) || defined(TARGET_STAX)
 
-// Ledger Nano X or Nano S Plus
-#define MAX_DATA_SIZE 10000
+// Ledger Nano X or Nano S Plus or Stax
+// !!! warning !!! replace 10000 by 650 --> overflow occurs when using 10000
+// wait the correction of this PR to change https://github.com/LedgerHQ/app-near/pull/18 
+#define MAX_DATA_SIZE 650
 
 #else
 

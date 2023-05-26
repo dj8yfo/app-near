@@ -24,7 +24,7 @@ APP_LOAD_PARAMS= --curve ed25519 --path "44'/397'" --appFlags 0x240 $(COMMON_LOA
 
 APPVERSION_M=1
 APPVERSION_N=2
-APPVERSION_P=2
+APPVERSION_P=3
 APPNAME = "NEAR"
 APPVERSION = $(APPVERSION_M).$(APPVERSION_N).$(APPVERSION_P)
 
@@ -32,11 +32,12 @@ DEFINES += $(DEFINES_LIB)
 
 
 ifeq ($(TARGET_NAME),TARGET_NANOS)
-	ICONNAME=near_icon.gif
+    ICONNAME=icons/nanos_app_near.gif
+else ifeq ($(TARGET_NAME),TARGET_STAX)
+    ICONNAME=icons/stax_app_near_32px.gif
 else
-	ICONNAME=near_icon_x.gif
+    ICONNAME=icons/nanox_app_near.gif
 endif
-
 
 ################
 # Default rule #
@@ -48,7 +49,10 @@ all: default
 ############
 
 DEFINES   += OS_IO_SEPROXYHAL
-DEFINES   += HAVE_BAGL HAVE_SPRINTF
+DEFINES   += HAVE_SPRINTF
+ifneq ($(TARGET_NAME),TARGET_STAX)
+DEFINES += HAVE_BAGL HAVE_UX_FLOW
+endif
 DEFINES   += HAVE_IO_USB HAVE_L4_USBLIB IO_USB_MAX_ENDPOINTS=6 IO_HID_EP_LENGTH=64 HAVE_USB_APDU
 DEFINES   += LEDGER_MAJOR_VERSION=$(APPVERSION_M) LEDGER_MINOR_VERSION=$(APPVERSION_N) LEDGER_PATCH_VERSION=$(APPVERSION_P)
 
@@ -63,27 +67,28 @@ DEFINES       += HAVE_WEBUSB WEBUSB_URL_SIZE_B=$(shell echo -n $(WEBUSB_URL) | w
 
 DEFINES   += UNUSED\(x\)=\(void\)x
 DEFINES   += APPVERSION=\"$(APPVERSION)\"
+DEFINES   += APPNAME=\"$(APPNAME)\"
 
-
-ifeq ($(TARGET_NAME),TARGET_NANOX)
-DEFINES       += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000
-DEFINES       += HAVE_BLE_APDU # basic ledger apdu transport over BLE
+ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX))
+    DEFINES += HAVE_BLE BLE_COMMAND_TIMEOUT_MS=2000 HAVE_BLE_APDU
 endif
 
 ifeq ($(TARGET_NAME),TARGET_NANOS)
-DEFINES       += IO_SEPROXYHAL_BUFFER_SIZE_B=128
-else
-DEFINES       += IO_SEPROXYHAL_BUFFER_SIZE_B=300
-DEFINES       += HAVE_GLO096
-DEFINES       += HAVE_BAGL BAGL_WIDTH=128 BAGL_HEIGHT=64
-DEFINES       += HAVE_BAGL_ELLIPSIS # long label truncation feature
-DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_REGULAR_11PX
-DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_EXTRABOLD_11PX
-DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_LIGHT_16PX
+    DEFINES       += IO_SEPROXYHAL_BUFFER_SIZE_B=128
+else ifneq ($(TARGET_NAME),TARGET_STAX)
+# Nano X, Nano S plus
+    DEFINES       += IO_SEPROXYHAL_BUFFER_SIZE_B=300
+    DEFINES       += HAVE_GLO096
+    DEFINES       += HAVE_BAGL BAGL_WIDTH=128 BAGL_HEIGHT=64
+    DEFINES       += HAVE_BAGL_ELLIPSIS # long label truncation feature
+    DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_REGULAR_11PX
+    DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_EXTRABOLD_11PX
+    DEFINES       += HAVE_BAGL_FONT_OPEN_SANS_LIGHT_16PX
+else ifeq ($(TARGET_NAME),TARGET_STAX)
+# Stax
+    DEFINES += IO_SEPROXYHAL_BUFFER_SIZE_B=300
+    DEFINES += NBGL_QRCODE
 endif
-
-# Both nano S and X benefit from the flow.
-DEFINES       += HAVE_UX_FLOW
 
 # Enabling debug PRINTF
 DEBUG = 0
@@ -116,14 +121,8 @@ $(info GCCPATH is not set: arm-none-eabi-* will be used from PATH)
 endif
 
 CC       := $(CLANGPATH)clang
-
-#CFLAGS   += -O0
-CFLAGS   += -O3 -Os
-
-AS     := $(GCCPATH)arm-none-eabi-gcc
-
+AS       := $(GCCPATH)arm-none-eabi-gcc
 LD       := $(GCCPATH)arm-none-eabi-gcc
-LDFLAGS  += -O3 -Os
 LDLIBS   += -lm -lgcc -lc
 
 # import rules to compile glyphs(/pone)
@@ -132,10 +131,13 @@ include $(BOLOS_SDK)/Makefile.glyphs
 ### variables processed by the common makefile.rules of the SDK to grab source files and include dirs
 APP_SOURCE_PATH  += src
 SDK_SOURCE_PATH  += lib_stusb lib_stusb_impl lib_u2f
-SDK_SOURCE_PATH  += lib_ux
 
-ifeq ($(TARGET_NAME),TARGET_NANOX)
-SDK_SOURCE_PATH  += lib_blewbxx lib_blewbxx_impl
+ifneq ($(TARGET_NAME),TARGET_STAX)
+SDK_SOURCE_PATH += lib_ux
+endif
+
+ifeq ($(TARGET_NAME),$(filter $(TARGET_NAME),TARGET_NANOX TARGET_STAX))
+    SDK_SOURCE_PATH += lib_blewbxx lib_blewbxx_impl
 endif
 
 load: all
@@ -162,8 +164,6 @@ include $(BOLOS_SDK)/Makefile.rules
 
 #add dependency on custom makefile filename
 dep/%.d: %.c Makefile
-
-
 
 listvariants:
 	@echo VARIANTS COIN near

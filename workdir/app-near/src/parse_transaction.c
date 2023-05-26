@@ -356,6 +356,7 @@ int parse_transaction() {
             return SIGN_FLOW_ADD_FUNCTION_CALL_KEY;
         } else {
             // full access
+            COPY_LITERAL(ui_context.line5, "Full access");
             return SIGN_FLOW_ADD_FULL_ACCESS_KEY;
         }
     }
