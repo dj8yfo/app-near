@@ -21,7 +21,7 @@
 INFO_STEP(sign_flow_intro_step, "Confirm", ui_context.line1);
 INFO_STEP(sign_flow_receiver_step, "To", ui_context.line2);
 INFO_STEP(sign_flow_signer_step, "From", ui_context.line3);
-INFO_STEP(sign_flow_amount_step, "Amount", ui_context.amount);
+INFO_STEP(sign_flow_amount_step, "Amount (NEAR)", ui_context.amount);
 INFO_STEP(sign_flow_deposit_step, "Deposit", ui_context.line5);
 INFO_STEP(sign_flow_args_step, "Args", ui_context.long_line);
 INFO_STEP(sign_flow_to_account_step, "To Account", ui_context.line3);
@@ -181,7 +181,7 @@ static void choice_callback(bool confirm)
 #define RECEIVER_VALUE ui_context.line2
 #define SIGNER_ITEM "From"
 #define SIGNER_VALUE ui_context.line3
-#define AMOUNT_ITEM "Amount"
+#define AMOUNT_ITEM "Amount (NEAR)"
 #define AMOUNT_VALUE ui_context.amount
 #define DEPOSIT_ITEM "Deposit"
 #define DEPOSIT_VALUE ui_context.line5
