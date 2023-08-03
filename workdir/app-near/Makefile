@@ -88,6 +88,7 @@ else ifeq ($(TARGET_NAME),TARGET_STAX)
 # Stax
     DEFINES += IO_SEPROXYHAL_BUFFER_SIZE_B=300
     DEFINES += NBGL_QRCODE
+    SDK_SOURCE_PATH += qrcode
 endif
 
 # Enabling debug PRINTF
