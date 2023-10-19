@@ -32,28 +32,32 @@ if [ ! -d dev-env ]; then
     mkdir dev-env/CC/others
     mkdir dev-env/CC/nanox
 
-    wget https://launchpad.net/gcc-arm-embedded/5.0/5-2016-q1-update/+download/gcc-arm-none-eabi-5_3-2016q1-20160330-linux.tar.bz2
-    tar xf gcc-arm-none-eabi-5_3-2016q1-20160330-linux.tar.bz2
-    rm gcc-arm-none-eabi-5_3-2016q1-20160330-linux.tar.bz2
-    cp -r gcc-arm-none-eabi-5_3-2016q1 dev-env/CC/nanox/gcc-arm-none-eabi-5_3-2016q1
-    mv gcc-arm-none-eabi-5_3-2016q1 dev-env/CC/others/gcc-arm-none-eabi-5_3-2016q1
+    wget 'https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.10/gcc-arm-none-eabi-10.3-2021.10-x86_64-linux.tar.bz2?rev=78196d3461ba4c9089a67b5f33edf82a&hash=5631ACEF1F8F237389F14B41566964EC' -O gcc-arm-none-eabi-10.3-2021.10-x86_64-linux.tar.bz2
+    tar xf gcc-arm-none-eabi-10.3-2021.10-x86_64-linux.tar.bz2
+    rm gcc-arm-none-eabi-10.3-2021.10-x86_64-linux.tar.bz2
+    cp -r gcc-arm-none-eabi-10.3-2021.10 dev-env/CC/nanox/gcc-arm-none-eabi-10.3-2021.10
+    mv gcc-arm-none-eabi-10.3-2021.10 dev-env/CC/others/gcc-arm-none-eabi-10.3-2021.10
 
-    wget http://releases.llvm.org/4.0.0/clang+llvm-4.0.0-x86_64-linux-gnu-ubuntu-16.10.tar.xz -O clang+llvm.tar.xz
+    wget https://releases.llvm.org/9.0.0/clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz -O clang+llvm.tar.xz
+
     tar xf clang+llvm.tar.xz
     rm clang+llvm.tar.xz
     mv clang+llvm* dev-env/CC/others/clang-arm-fropi
 
+    # this script has not been tested with Nano X for quite a while
     wget http://releases.llvm.org/7.0.0/clang+llvm-7.0.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz -O clang+llvm.tar.xz
     tar xf clang+llvm.tar.xz
     rm clang+llvm.tar.xz
     mv clang+llvm* dev-env/CC/nanox/clang-arm-fropi
 
+    # this script has not been tested with Nano Blue for quite a while
     wget https://github.com/LedgerHQ/blue-secure-sdk/archive/blue-r21.1.tar.gz -O blue-secure-sdk.tar.gz
     tar xf blue-secure-sdk.tar.gz
     rm blue-secure-sdk.tar.gz
     mv blue-secure-sdk* dev-env/SDK/blue-secure-sdk
 
-    wget https://github.com/LedgerHQ/nanos-secure-sdk/archive/nanos-160.tar.gz -O nanos-secure-sdk.tar.gz
+    # Nano S path is ok (at the time of comit adding this line)
+    wget https://github.com/LedgerHQ/nanos-secure-sdk/archive/v2.1.0-2.tar.gz -O nanos-secure-sdk.tar.gz
     tar xf nanos-secure-sdk.tar.gz
     rm nanos-secure-sdk.tar.gz
     mv nanos-secure-sdk* dev-env/SDK/nanos-secure-sdk
