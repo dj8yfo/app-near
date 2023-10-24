@@ -1,4 +1,6 @@
-# NEAR Ledger App Docker
+# Ledger NEAR Application 
+
+This is NEAR Application for the Ledger Nano S/X/SP and Stax.
 
 ## Quick start guide
 
