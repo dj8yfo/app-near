@@ -360,6 +360,7 @@ static void add_chunk_data(const uint8_t *input_data, size_t input_length)
         // PRINTF("data_size: %d\n", input_length);
         if (tmp_ctx.signing_context.buffer_used + input_length > MAX_DATA_SIZE)
         {
+            tmp_ctx.signing_context.buffer_used = 0;
             THROW(SW_BUFFER_OVERFLOW);
         }
         memcpy(&tmp_ctx.signing_context.buffer[tmp_ctx.signing_context.buffer_used], input_data, input_length);
