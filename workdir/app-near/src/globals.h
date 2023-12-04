@@ -14,10 +14,13 @@
 extern unsigned int ux_step;
 extern unsigned int ux_step_count;
 
+enum BlindSign {
+    BlindSignDisabled = 0,
+    BlindSignEnabled = 1,
+};
+
 typedef struct internalStorage_t {
-    unsigned char dummy_setting_1;
-    unsigned char dummy_setting_2;
-    uint8_t initialized;
+    uint8_t blind_sign_enabled;
 } internalStorage_t;
 
 extern const internalStorage_t N_storage_real;

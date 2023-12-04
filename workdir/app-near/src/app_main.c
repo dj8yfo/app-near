@@ -16,6 +16,7 @@
  *****************************************************************************/
 
 #include "menu.h"
+#include "globals.h"
 #include "app_main.h"
 #include "dispatcher.h"
 #include "io.h"
@@ -29,6 +30,10 @@ void init_context() {
     memset(&tmp_ctx, 0, sizeof(tmp_ctx));
 }
 
+void nv_app_state_init(){
+    blind_sign_enabled = N_storage.blind_sign_enabled;
+}
+
 void app_main(void) {
     // Length of APDU command received in G_io_apdu_buffer
     int input_len = 0;
@@ -36,6 +41,8 @@ void app_main(void) {
     command_t cmd;
 
     io_init();
+
+    nv_app_state_init();
     ui_idle();
 
     for (;;) {
