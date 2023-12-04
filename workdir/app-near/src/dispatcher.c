@@ -27,7 +27,7 @@
 #include "get_wallet_id.h"
 #include "sign_transaction.h"
 #include "constants.h"
-#include "main.h"
+#include "app_main.h"
 
 
 // Called by both the U2F and the standard communications channel

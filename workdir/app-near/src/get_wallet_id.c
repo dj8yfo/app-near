@@ -2,7 +2,7 @@
 #include "os.h"
 #include "ux.h"
 #include "utils.h"
-#include "main.h"
+#include "app_main.h"
 #include "io.h"
 #include "ledger_crypto.h"
 

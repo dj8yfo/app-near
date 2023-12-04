@@ -17,9 +17,8 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 ********************************************************************************/
+#pragma once 
 
-#ifndef __MAIN_H__
-#define __MAIN_H__
 #include "os.h"
 #include "cx.h"
 #include <stdbool.h>
@@ -30,5 +29,3 @@ void read_path_from_bytes(const uint8_t *buffer, uint32_t *path);
 
 void init_context();
 uint32_t set_result_sign();
-
-#endif

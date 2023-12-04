@@ -1,7 +1,7 @@
 #include "get_public_key.h"
 #include "base58.h"
 #include "utils.h"
-#include "main.h"
+#include "app_main.h"
 #include "os.h"
 #include "ux.h"
 #include "glyphs.h"
