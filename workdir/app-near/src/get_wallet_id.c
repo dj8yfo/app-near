@@ -115,23 +115,18 @@ int handle_get_wallet_id(uint8_t p1, uint8_t p2, const uint8_t *input_buffer, ui
 
     init_context();
 
-    // Get the public key and return it.
-    uint8_t public_key[32];
-
     uint32_t path[5];
     if (input_length < sizeof(path)) {
         return io_send_sw(INVALID_PARAMETER);
     }
     read_path_from_bytes(input_buffer, path);
 
-    if (!get_ed25519_public_key_for_path(path, public_key))
+    if (!get_ed25519_public_key_for_path(path, tmp_ctx.address_context.public_key))
     {
         return io_send_sw(INVALID_PARAMETER);
     }
 
-    memcpy(tmp_ctx.address_context.public_key, public_key, 32);
-
-    bin_to_hex(wallet_id, public_key, 32);
+    bin_to_hex(wallet_id, tmp_ctx.address_context.public_key, 32);
     display_wallet_id();
     return 0;
 }

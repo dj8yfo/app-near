@@ -17,3 +17,4 @@ typedef enum rlpTxType {
 int format_long_decimal_amount(size_t input_size, char *input, size_t output_size, char *output, int nomination);
 void bin_to_hex(char *out, const uint8_t *in, size_t len);
 void send_response(uint8_t tx, bool approve);
+void read_path_from_bytes(const uint8_t *buffer, uint32_t *path);

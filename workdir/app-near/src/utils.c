@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "utils.h"
 #include "menu.h"
+#include "os_utils.h"
 
 /*
  Adapted from https://en.wikipedia.org/wiki/Double_dabble#C_implementation
@@ -137,3 +138,13 @@ void send_response(uint8_t tx, bool approve) {
     ui_idle();
     #endif
 }
+
+// 20 bytes total
+void read_path_from_bytes(const uint8_t *buffer, uint32_t *path) {
+    path[0] = U4BE(buffer, 0);
+    path[1] = U4BE(buffer, 4);
+    path[2] = U4BE(buffer, 8);
+    path[3] = U4BE(buffer, 12);
+    path[4] = U4BE(buffer, 16);
+}
+

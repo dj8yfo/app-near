@@ -4,6 +4,7 @@
 #include "ux.h"
 #include "utils.h"
 #include "app_main.h"
+#include "ledger_crypto.h"
 #include "io.h"
 
 //////////////////////////////////////////////////////////////////////

@@ -24,8 +24,8 @@
 #include <stdbool.h>
 
 #include "context.h"
+extern tmpContext_t tmp_ctx;
 
 void read_path_from_bytes(const uint8_t *buffer, uint32_t *path);
 
 void init_context();
-uint32_t set_result_sign();
