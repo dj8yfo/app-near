@@ -20,12 +20,10 @@
 ********************************************************************************/
 
 #include "utils.h"
-#include "ui.h"
 #include "get_public_key.h"
 #include "get_wallet_id.h"
 #include "sign_transaction.h"
 #include "menu.h"
-#include "near.h"
 #include "app_main.h"
 #include "crypto/ledger_crypto.h"
 #include "crypto_helpers.h"

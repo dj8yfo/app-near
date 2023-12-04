@@ -38,22 +38,19 @@ int apdu_dispatcher(const command_t *cmd) {
 
     switch (cmd->ins) {
         case INS_SIGN: 
-            return handle_sign_transaction(G_io_apdu_buffer[OFFSET_P1], G_io_apdu_buffer[OFFSET_P2], G_io_apdu_buffer + OFFSET_CDATA, G_io_apdu_buffer[OFFSET_LC]);
-            break;
+            return handle_sign_transaction(cmd->p1, cmd->p2, cmd->data, cmd->lc);
 
         case INS_GET_PUBLIC_KEY:
             if (cmd->lc != 20) {
                 return io_send_sw(SW_CONDITIONS_NOT_SATISFIED);
             }
-            return handle_get_public_key(G_io_apdu_buffer[OFFSET_P1], G_io_apdu_buffer[OFFSET_P2], G_io_apdu_buffer + OFFSET_CDATA, G_io_apdu_buffer[OFFSET_LC]);
-            break;
+            return handle_get_public_key(cmd->p1, cmd->p2, cmd->data, cmd->lc);
 
         case INS_GET_WALLET_ID:
             if (cmd->lc != 20) {
                 return io_send_sw(SW_CONDITIONS_NOT_SATISFIED);
             }
-            return handle_get_wallet_id(G_io_apdu_buffer[OFFSET_P1], G_io_apdu_buffer[OFFSET_P2], G_io_apdu_buffer + OFFSET_CDATA, G_io_apdu_buffer[OFFSET_LC]);
-            break;
+            return handle_get_wallet_id(cmd->p1, cmd->p2, cmd->data, cmd->lc);
 
         case INS_GET_APP_CONFIGURATION:
             // NOTE: This allows using INS_GET_APP_CONFIGURATION as "reset state" command
