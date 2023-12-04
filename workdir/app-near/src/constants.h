@@ -1,5 +1,4 @@
-#ifndef __CONSTANTS_H__
-#define __CONSTANTS_H__
+#pragma once
 
 // Hardware dependent limits:
 //   Ledger Nano X has 32K RAM
@@ -50,4 +49,3 @@
 #define SIGN_FLOW_ADD_FUNCTION_CALL_KEY 3
 #define SIGN_FLOW_ADD_FULL_ACCESS_KEY 4
 
-#endif 
