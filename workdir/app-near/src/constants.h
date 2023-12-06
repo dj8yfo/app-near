@@ -1,5 +1,4 @@
-#ifndef __CONSTANTS_H__
-#define __CONSTANTS_H__
+#pragma once
 
 // Hardware dependent limits:
 //   Ledger Nano X has 32K RAM
@@ -36,10 +35,12 @@
 #define SW_DEVICE_IS_LOCKED 0x6986
 #define SW_CONDITIONS_NOT_SATISFIED 0x6985
 #define SW_BUFFER_OVERFLOW 0x6990
+#define SW_PARSING_ERROR 0x6991
 #define SW_INCORRECT_P1_P2 0x6A86
 #define SW_INS_NOT_SUPPORTED 0x6D00
 #define SW_CLA_NOT_SUPPORTED  0x6E00
 #define SW_SECURITY_STATUS_NOT_SATISFIED 0x6982
+#define SW_WRONG_DATA_LENGTH 0x6A87
 
 #define SIGN_PARSING_ERROR -1
 #define SIGN_FLOW_GENERIC 0
@@ -48,4 +49,3 @@
 #define SIGN_FLOW_ADD_FUNCTION_CALL_KEY 3
 #define SIGN_FLOW_ADD_FULL_ACCESS_KEY 4
 
-#endif 

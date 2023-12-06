@@ -17,19 +17,15 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 ********************************************************************************/
+#pragma once 
 
-#ifndef __MAIN_H__
-#define __MAIN_H__
 #include "os.h"
 #include "cx.h"
 #include <stdbool.h>
 
 #include "context.h"
+extern tmpContext_t tmp_ctx;
 
 void read_path_from_bytes(const uint8_t *buffer, uint32_t *path);
-bool get_ed25519_public_key_for_path(const uint32_t* path, cx_ecfp_public_key_t* public_key);
 
 void init_context();
-uint32_t set_result_sign();
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef __CONTEXT_H__
-#define __CONTEXT_H__
+#pragma once
 
 #include <stdint.h>
 
@@ -40,4 +39,3 @@ extern uiContext_t ui_context;
 
 extern tmpContext_t tmp_ctx; // Temporary area to store stuff
 
-#endif /* __CONTEXT_H__ */

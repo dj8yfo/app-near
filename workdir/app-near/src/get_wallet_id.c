@@ -2,7 +2,9 @@
 #include "os.h"
 #include "ux.h"
 #include "utils.h"
-#include "main.h"
+#include "app_main.h"
+#include "io.h"
+#include "ledger_crypto.h"
 
 static char wallet_id[65];
 
@@ -107,30 +109,24 @@ static void display_wallet_id(void)
 
 #endif
 
-void handle_get_wallet_id(uint8_t p1, uint8_t p2, const uint8_t *input_buffer, uint16_t input_length, volatile unsigned int *flags, volatile unsigned int *tx) {
+int handle_get_wallet_id(uint8_t p1, uint8_t p2, const uint8_t *input_buffer, uint16_t input_length) {
     UNUSED(p1);
     UNUSED(p2);
-    UNUSED(tx);
 
     init_context();
 
-    // Get the public key and return it.
-    cx_ecfp_public_key_t public_key;
-
     uint32_t path[5];
     if (input_length < sizeof(path)) {
-        THROW(INVALID_PARAMETER);
+        return io_send_sw(INVALID_PARAMETER);
     }
     read_path_from_bytes(input_buffer, path);
 
-    if (!get_ed25519_public_key_for_path(path, &public_key))
+    if (!get_ed25519_public_key_for_path(path, tmp_ctx.address_context.public_key))
     {
-        THROW(INVALID_PARAMETER);
+        return io_send_sw(INVALID_PARAMETER);
     }
 
-    memcpy(tmp_ctx.address_context.public_key, public_key.W, 32);
-
-    bin_to_hex(wallet_id, public_key.W, 32);
+    bin_to_hex(wallet_id, tmp_ctx.address_context.public_key, 32);
     display_wallet_id();
-    *flags |= IO_ASYNCH_REPLY;
+    return 0;
 }
