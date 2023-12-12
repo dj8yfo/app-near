@@ -19,13 +19,13 @@ INS_GET_WALLET_ID = 0x05
 INS_GET_APP_CONFIGURATION = 0x06
 
 
-# Parameter 1 for first APDU number.
+# Parameter 1 = not last APDU (INS_SIGN Sign instruction)
 P1_MORE = 0x00
 # Parameter 1 for screen confirmation for GET_PUBKEY.
 P1_CONFIRM = 0x00
 # Parameter 1 for NO screen confirmation for GET_PUBKEY.
 P1_NO_CONFIRM = 0x01
-# Parameter 1 for more APDU to receive.
+# Parameter 1 = last APDU (INS_SIGN Sign instruction)
 P1_LAST = 0x80
 # Parameter not used for this APDU
 P1_P2_NOT_USED = 0x57
