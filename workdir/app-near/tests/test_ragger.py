@@ -19,14 +19,14 @@ INS_GET_WALLET_ID = 0x05
 INS_GET_APP_CONFIGURATION = 0x06
 
 
-# Parameter 1 for first APDU number.
-P1_START = 0x00
+# Parameter 1 = not last APDU (INS_SIGN Sign instruction)
+P1_MORE = 0x00
 # Parameter 1 for screen confirmation for GET_PUBKEY.
 P1_CONFIRM = 0x00
 # Parameter 1 for NO screen confirmation for GET_PUBKEY.
 P1_NO_CONFIRM = 0x01
-# Parameter 1 for more APDU to receive.
-P1_MORE = 0x80
+# Parameter 1 = last APDU (INS_SIGN Sign instruction)
+P1_LAST = 0x80
 # Parameter not used for this APDU
 P1_P2_NOT_USED = 0x57
 
@@ -52,17 +52,17 @@ class Nearbackend():
         while cnt < len(data):
             to_send = min(len(data) - cnt, 255)
 
-            if (cnt + to_send) <= len(data):
+            if (cnt + to_send) >= len(data):
                 # Last APDU
                 with self.backend.exchange_async(CLA,
                                                  INS_SIGN,
-                                                 P1_MORE,
+                                                 P1_LAST,
                                                  P1_P2_NOT_USED,
-                                                 bytes(data[0:to_send])) as response:
+                                                 bytes(data[cnt:(cnt + to_send)])) as response:
                     yield response
             else:
                 # Not last APDU
-                rapdu = self.backend.exchange(CLA, INS_SIGN, P1_START, P1_P2_NOT_USED, bytes(data[0:to_send]))
+                rapdu = self.backend.exchange(CLA, INS_SIGN, P1_MORE, P1_P2_NOT_USED, bytes(data[cnt:(cnt + to_send)]))
                 if rapdu.status != SW_OK:
                     return rapdu
 
@@ -545,6 +545,73 @@ def test_sign_delete_account(firmware, backend, navigator, test_name):
         "0f00000073706563756c6f736163636f756e740061a91abba0099d3ef23923645b37f19e6ebfeb220b238ee9abef3eeb32f851b40f7ac5e5c85700000d00000072656365697665722e6e656172a3f5d1167a5c605fed71fc78d4381bef47a5acb3aba6fc9c07d7b8b912fc1e2a01000000070d00000062656e65666963696172796964")
     expected_signature = bytes.fromhex(
         "f518bcebfc57c3bb10d07511a5819f0f048868657661fb84a05f09297d3cadeb9e6e5995addbb6f9cd6c28a31474306adf0a41914a83161f380cd8e6a0a1a705")
+    generic_test_sign(backend, firmware, navigator, test_name, near_payload, expected_signature)
+
+def test_sign_multiple_actions_2_apdu_exchanges(firmware, backend, navigator, test_name):
+    """
+    Transaction {
+        signer_id: AccountId(
+            "blablatest.testnet",
+        ),
+        public_key: ed25519:EFr6nRvgKKeteKoEH7hudt8UHYiu94Liq2yMM7x2AU9U,
+        nonce: 96520360000015,
+        receiver_id: AccountId(
+            "speculos.testnet",
+        ),
+        block_hash: C32rfeBkSMT1xnsrArkV9Mu81ww9qK7n6Kw17NhEbVuK,
+        actions: [
+            Transfer(
+                TransferAction {
+                    deposit: 150000000000000000000000,
+                },
+            ),
+            Transfer(
+                TransferAction {
+                    deposit: 150000000000000000000000,
+                },
+            ),
+            Transfer(
+                TransferAction {
+                    deposit: 150000000000000000000000,
+                },
+            ),
+            Transfer(
+                TransferAction {
+                    deposit: 150000000000000000000000,
+                },
+            ),
+            Transfer(
+                TransferAction {
+                    deposit: 150000000000000000000000,
+                },
+            ),
+            Transfer(
+                TransferAction {
+                    deposit: 150000000000000000000000,
+                },
+            ),
+            Transfer(
+                TransferAction {
+                    deposit: 150000000000000000000000,
+                },
+            ),
+            Transfer(
+                TransferAction {
+                    deposit: 150000000000000000000000,
+                },
+            ),
+            Transfer(
+                TransferAction {
+                    deposit: 150000000000000000000000,
+                },
+            ),
+        ],
+    }
+    """
+    near_payload = bytes.fromhex(
+        "12000000626c61626c61746573742e746573746e657400c4f5941e81e071c2fd1dae2e71fd3d859d462484391d9a90bf219211dcbb320f0f7ac5e5c85700001000000073706563756c6f732e746573746e6574a3f5d1167a5c605fed71fc78d4381bef47a5acb3aba6fc9c07d7b8b912fc1e2a09000000030000c071f0d12b84c31f000000000000030000c071f0d12b84c31f000000000000030000c071f0d12b84c31f000000000000030000c071f0d12b84c31f000000000000030000c071f0d12b84c31f000000000000030000c071f0d12b84c31f000000000000030000c071f0d12b84c31f000000000000030000c071f0d12b84c31f000000000000030000c071f0d12b84c31f000000000000")
+    expected_signature = bytes.fromhex(
+        "259308406966fd6f3d307c21e28dee16c42dca2806f88a03c96850f2c3eec4087f08d663123512b27fe387fda5dd9d65968a865db82c8fa305b48fa485a98601")
     generic_test_sign(backend, firmware, navigator, test_name, near_payload, expected_signature)
 
 # test fail --> code to improve
