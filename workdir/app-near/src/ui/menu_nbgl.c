@@ -1,6 +1,5 @@
 #ifdef HAVE_NBGL
 
-// #include "os.h"
 #include "menu.h"
 #include "globals.h"
 #include "nbgl_use_case.h"
