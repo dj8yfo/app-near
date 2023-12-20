@@ -78,7 +78,6 @@ void ui_menu_settings(void)
   G_switches[BLIND_SIGN_SWITCH_IDX].tuneId = TUNE_TAP_CASUAL;
 
   strlcpy(settings_title, APPNAME, MAX_STRING_LENGTH);
-  strlcat(settings_title, " Settings", MAX_STRING_LENGTH);
   nbgl_useCaseSettings(settings_title, INIT_INFO_PAGE, SETTINGS_PAGES_TOTAL, false, ui_idle, settings_nav_callback, settings_controls_callback);
 }
 
