@@ -19,8 +19,10 @@ enum BlindSign {
     BlindSignEnabled = 1,
 };
 
-typedef struct internalStorage_t {
+typedef struct internalStorage_t
+{
     uint8_t blind_sign_enabled;
+    uint8_t initialized;
 } internalStorage_t;
 
 extern const internalStorage_t N_storage_real;
