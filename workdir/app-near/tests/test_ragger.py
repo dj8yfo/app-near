@@ -144,6 +144,7 @@ def test_app_info_menu(firmware, navigator, test_name):
     else:
         instructions = [
             NavInsID.USE_CASE_HOME_INFO,
+            NavInsID.USE_CASE_SETTINGS_NEXT,
             NavInsID.USE_CASE_SETTINGS_MULTI_PAGE_EXIT
         ]
     navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name, instructions,
@@ -875,7 +876,7 @@ def test_sign_add_key_cancel(firmware, backend, navigator, test_name):
         "060000006172746875720053f9afa67ef91539ff38e2b36bbbed2d1dce6e18d06337cf6647389b5477359b0f7ac5e5c85700004000000039383739336364393161336638373066623132366636363238353830386337653039346166636663346564613861393730663636343863646630646264366465a3f5d1167a5c605fed71fc78d4381bef47a5acb3aba6fc9c07d7b8b912fc1e2a0100000005002ffe256fd9a6e815abc3f220163413ac62871ecc5875d87625a35ce7ea65ee2f393000000000000001")
     generic_sign_message_cancel(backend, firmware, navigator, test_name, near_payload)
 
-def record_settings_screens(firmware, navigator, test_name):
+def record_settings_screens_bs(firmware, navigator, test_name, reject_confirm_blindsign_popup=False):
     """
     test section to reflect blind sign is disabled in settings (with snapshots)
     """
@@ -887,11 +888,24 @@ def record_settings_screens(firmware, navigator, test_name):
             NavInsID.BOTH_CLICK,
         ]
     else:
-        instructions = [
-            NavInsID.USE_CASE_HOME_INFO,
-            NavInsID.USE_CASE_SETTINGS_NEXT,
-            NavInsID.USE_CASE_SETTINGS_MULTI_PAGE_EXIT
-        ]
+        if not reject_confirm_blindsign_popup:
+            instructions = [
+                NavInsID.USE_CASE_HOME_INFO,
+                NavInsID.USE_CASE_SETTINGS_NEXT,
+                NavInsID.USE_CASE_SETTINGS_MULTI_PAGE_EXIT
+            ]
+            test_name += '_no_popup'
+        else:
+            instructions = [
+                NavInsID.USE_CASE_HOME_INFO,
+                NavInsID.USE_CASE_SETTINGS_NEXT,
+                NavIns(NavInsID.TOUCH, (300, 116)), # toggle switch of setting
+                NavInsID.USE_CASE_CHOICE_REJECT,
+                NavInsID.USE_CASE_SETTINGS_NEXT,
+                NavInsID.USE_CASE_SETTINGS_MULTI_PAGE_EXIT
+            ]
+            test_name += '_reject_popup'
+            
     navigator.navigate_and_compare(ROOT_SCREENSHOT_PATH, test_name, instructions,
                                    screen_change_before_first_instruction=False)    
     
@@ -906,13 +920,14 @@ def test_sign_blind_not_enabled_error(firmware, backend, navigator, test_name):
 
     near_tx_hash = bytes.fromhex("f7e4d5d16fb1329282414b0820a6137d11fd6ec6e6718c1d369f1b0becccb49b")
 
-    record_settings_screens(firmware, navigator, test_name)
-    with client.sign_message(DERIV_PATH_DATA, near_tx_hash, blind=True):
-        pass
+    for click_confirm_popup in [False, True]:
+        record_settings_screens_bs(firmware, navigator, test_name, click_confirm_popup)
+        with client.sign_message(DERIV_PATH_DATA, near_tx_hash, blind=True):
+            pass
 
-    response = client.get_async_response()
-    assert response.status == SW_SETTING_BLIND_DISABLED
-    assert len(response.data) == 0
+        response = client.get_async_response()
+        assert response.status == SW_SETTING_BLIND_DISABLED
+        assert len(response.data) == 0
 
 def enable_blind_sign_in_settings(firmware, navigator, test_name, record=False):
     """
@@ -933,6 +948,7 @@ def enable_blind_sign_in_settings(firmware, navigator, test_name, record=False):
             NavInsID.USE_CASE_SETTINGS_NEXT,
             NavIns(NavInsID.TOUCH, (300, 116)), # toggle switch of setting
             NavInsID.USE_CASE_CHOICE_CONFIRM,
+            NavInsID.USE_CASE_SETTINGS_NEXT,
             NavInsID.USE_CASE_SETTINGS_MULTI_PAGE_EXIT
         ]
     if record:
