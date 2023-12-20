@@ -53,19 +53,53 @@ static bool settings_nav_callback(uint8_t page, nbgl_pageContent_t *content)
   }
 }
 
-static void settings_controls_callback(int token, uint8_t index) {
-    UNUSED(index);
-    uint8_t value;
-    switch (token) {
-        case BLIND_SIGN_SWITCH_TOKEN:
-            value = (G_switches[BLIND_SIGN_SWITCH_IDX].initState != ON_STATE);
-            nvm_write((void *)&N_storage.blind_sign_enabled, &value, sizeof(value));
-            blind_sign_enabled = value;
-            break;
-        default:
-            PRINTF("Unreachable in `settings_controls_callback`\n");
-            break;
+// callback for setting warning choice
+static void review_warning_choice(bool confirm)
+{
+  uint8_t switch_value;
+  if (confirm)
+  {
+    // toggle the switch value
+    switch_value = !blind_sign_enabled;
+    // store the new setting value in NVM
+    nvm_write((void *)&N_storage.blind_sign_enabled, &switch_value, sizeof(switch_value));
+    blind_sign_enabled = switch_value;
+  }
+
+  // return to the settings menu
+  ui_menu_settings();
+}
+
+static void settings_controls_callback(int token, uint8_t index)
+{
+  UNUSED(index);
+  switch (token)
+  {
+  case BLIND_SIGN_SWITCH_TOKEN:
+    if (!blind_sign_enabled)
+    {
+      // Display the warning message and ask the user to confirm
+      nbgl_useCaseChoice(&C_warning64px,
+                         "Blind Sign",
+                         "Are you sure to\nallow blind signing\ntransactions?",
+                         "I understand, confirm",
+                         "Cancel",
+                         review_warning_choice);
     }
+    else
+    {
+      uint8_t switch_value;
+      // toggle the switch value
+      switch_value = !blind_sign_enabled;
+      // store the new setting value in NVM
+      nvm_write((void *)&N_storage.blind_sign_enabled, &switch_value, sizeof(switch_value));
+      blind_sign_enabled = switch_value;
+    }
+    break;
+  default:
+    PRINTF("Unreachable in `settings_controls_callback`\n");
+    break;
+  }
 }
 // info menu definition
 void ui_menu_settings(void)

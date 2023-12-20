@@ -932,6 +932,7 @@ def enable_blind_sign_in_settings(firmware, navigator, test_name, record=False):
             NavInsID.USE_CASE_HOME_INFO,
             NavInsID.USE_CASE_SETTINGS_NEXT,
             NavIns(NavInsID.TOUCH, (300, 116)), # toggle switch of setting
+            NavInsID.USE_CASE_CHOICE_CONFIRM,
             NavInsID.USE_CASE_SETTINGS_MULTI_PAGE_EXIT
         ]
     if record:
