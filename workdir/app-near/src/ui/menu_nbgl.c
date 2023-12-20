@@ -93,13 +93,13 @@ void ui_app_quit(void)
 // home page defintion
 void ui_idle(void)
 {
-  #define SETTINGS_BUTTON_DISABLED (false)
 
+  #define SETTINGS_BUTTON_ENABLED (true)
   nbgl_useCaseHome(
       APPNAME,
       &C_stax_app_near_64px,
       NULL,
-      SETTINGS_BUTTON_DISABLED,
+      SETTINGS_BUTTON_ENABLED,
       ui_menu_settings,
       ui_app_quit);
 }
