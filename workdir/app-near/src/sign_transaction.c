@@ -507,7 +507,7 @@ int handle_sign_transaction(uint8_t p1, uint8_t p2, const uint8_t *input_buffer,
     {
         // NOTE: this is processed in one apdu transfer of 52 bytes 
         init_context();
-        if (blind_sign_enabled != BlindSignEnabled) {
+        if (blind_sign_enabled != BLSGN_ON_STATE) {
             PRINTF("blind signature not enabled\n");
             return io_send_sw(SW_SETTING_BLIND_DISABLED);
         }

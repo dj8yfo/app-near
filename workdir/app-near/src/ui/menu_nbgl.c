@@ -29,27 +29,27 @@ enum {
 
 static bool settings_nav_callback(uint8_t page, nbgl_pageContent_t *content)
 {
-  if (page == 0) {
+  if (page == 0)
+  {
     content->type = INFOS_LIST;
     content->infosList.nbInfos = 2;
     content->infosList.infoTypes = INFO_TYPES;
     content->infosList.infoContents = INFO_CONTENTS;
     return true;
-  } else if (page == 1) {
+  }
+  else if (page == 1)
+  {
 
-    if (blind_sign_enabled == BlindSignDisabled) {
-        G_switches[BLIND_SIGN_SWITCH_IDX].initState = OFF_STATE;
-    } else {
-        G_switches[BLIND_SIGN_SWITCH_IDX].initState = ON_STATE;
-    }
+    G_switches[BLIND_SIGN_SWITCH_IDX].initState = blind_sign_enabled;
 
     content->type = SWITCHES_LIST;
     content->switchesList.nbSwitches = SWITCHES_TOTAL;
     content->switchesList.switches = G_switches;
     return true;
-    
-  } else {
-    return false;  
+  }
+  else
+  {
+    return false;
   }
 }
 

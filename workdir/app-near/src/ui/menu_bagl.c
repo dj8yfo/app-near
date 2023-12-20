@@ -11,13 +11,13 @@ void settings_submenu_selector(unsigned int idx);
 //////////////////////////////////////////////////////////////////////////////////////
 // Enable contract data submenu:
 
-void blind_sign_enabled_data_change(enum BlindSign new_blind_sign)
+void blind_sign_enabled_data_change(blind_sign_switch_state_t new_blind_sign)
 {
   PRINTF("current value of blind sign: %d\n", blind_sign_enabled);
   uint8_t value;
   switch (new_blind_sign) {
-      case BlindSignDisabled:
-      case BlindSignEnabled:
+      case BLSGN_OFF_STATE:
+      case BLSGN_ON_STATE:
           value = (uint8_t) new_blind_sign;
           if (value != blind_sign_enabled) {
             nvm_write((void *)&N_storage.blind_sign_enabled, &value, sizeof(value));
@@ -46,10 +46,10 @@ void blind_sign_enabled_data_selector(unsigned int idx)
   switch (idx)
   {
   case 0:
-    blind_sign_enabled_data_change(BlindSignEnabled);
+    blind_sign_enabled_data_change(BLSGN_ON_STATE);
     break;
   case 1:
-    blind_sign_enabled_data_change(BlindSignDisabled);
+    blind_sign_enabled_data_change(BLSGN_OFF_STATE);
     break;
   default:
     break;

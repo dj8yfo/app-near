@@ -14,10 +14,16 @@
 extern unsigned int ux_step;
 extern unsigned int ux_step_count;
 
-enum BlindSign {
-    BlindSignDisabled = 0,
-    BlindSignEnabled = 1,
-};
+/* Variants must preserve exactly the same numerical values 
+as
+typedef enum {
+    OFF_STATE,
+    ON_STATE
+} nbgl_state_t; */
+typedef enum {
+    BLSGN_OFF_STATE = 0,
+    BLSGN_ON_STATE = 1,
+} blind_sign_switch_state_t;
 
 typedef struct internalStorage_t
 {
